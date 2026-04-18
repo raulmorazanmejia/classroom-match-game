@@ -77,7 +77,7 @@
       box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
     }
 
-    button:hover { background: var(--accent-2); transform: translateY(-1px); }
+    button:hover { background: var(--accent-2); }
     button.secondary { background: #e5e7eb; color: #111827; box-shadow: none; }
     button.secondary:hover { background: #d1d5db; }
 
@@ -212,151 +212,124 @@
   <div class="wrap">
     <div class="topnav" id="nav"></div>
 
-    <section id="loginView" class="card hero hidden">
+    <section id="loginView" class="card hidden">
       <h1>Teacher Login</h1>
       <p class="muted">Log in once, then create activities and review results.</p>
       <div class="row">
         <div class="col">
           <label for="loginName">Teacher Name</label>
-          <input id="loginName" placeholder="Your name" />
+          <input id="loginName" placeholder="Your name">
         </div>
         <div class="col">
           <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" placeholder="Teacher password" />
+          <input id="loginPassword" type="password" placeholder="Teacher password">
         </div>
       </div>
-      <div class="row" style="margin-top:14px;">
+      <div class="row" style="margin-top:14px">
         <button id="loginBtn">Log In</button>
       </div>
       <div id="loginMessage"></div>
     </section>
 
-    <section id="dashboardView" class="card hero hidden">
+    <section id="dashboardView" class="card hidden">
       <h1>Teacher Dashboard</h1>
       <p class="muted">Create activities, open student links, and review results.</p>
-      <div class="row" style="margin-bottom:14px;">
+      <div class="row" style="margin-bottom:14px">
         <button id="createFromDashboardBtn">Create Activity</button>
         <button class="secondary" id="refreshDashboardBtn">Refresh</button>
       </div>
       <div id="dashboardMessage"></div>
-      <div style="overflow-x:auto; margin-top:12px;">
+      <div style="overflow-x:auto;margin-top:12px">
         <table id="dashboardTable" class="hidden">
           <thead>
-            <tr>
-              <th>Activity</th>
-              <th>Created</th>
-              <th>Links</th>
-            </tr>
+            <tr><th>Activity</th><th>Created</th><th>Links</th></tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
     </section>
 
-    <section id="createView" class="hidden">
-      <div class="card">
-        <h1>Create Match Activity</h1>
-        <p class="muted">Format each line like this: <code class="inline">left item, right item</code> or <code class="inline">left item | right item</code></p>
-        <div class="row">
-          <div class="col">
-            <label for="teacherName">Teacher/Admin Name</label>
-            <input id="teacherName" placeholder="Your name" />
-          </div>
-          <div class="col">
-            <label for="activityTitle">Activity Title</label>
-            <input id="activityTitle" placeholder="Passive Voice Match Practice" />
-          </div>
+    <section id="createView" class="card hidden">
+      <h1>Create Match Activity</h1>
+      <p class="muted">Format each line like this: left item, right item or left item | right item</p>
+      <div class="row">
+        <div class="col">
+          <label for="teacherName">Teacher/Admin Name</label>
+          <input id="teacherName" placeholder="Your name">
         </div>
-        <label for="pairsInput">Pairs</label>
-        <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
-        <div style="margin-top:14px;">
-          <span class="tool-tag">Mobile-friendly</span>
-          <span class="tool-tag">Tap-to-match</span>
-          <span class="tool-tag">Stores student results</span>
-          <span class="tool-tag">One global teacher password</span>
+        <div class="col">
+          <label for="activityTitle">Activity Title</label>
+          <input id="activityTitle" placeholder="Passive Voice Match Practice">
         </div>
-        <div class="row" style="margin-top:14px;">
-          <button id="generateLinksBtn">Generate Links</button>
-          <button class="secondary" id="loadDemoBtn">Load Demo</button>
-          <button class="secondary" id="backToDashboardBtn">Back to Dashboard</button>
+      </div>
+      <label for="pairsInput">Pairs</label>
+      <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
+      <div style="margin-top:14px">
+        <span class="tool-tag">Mobile-friendly</span>
+        <span class="tool-tag">Tap-to-match</span>
+        <span class="tool-tag">Stores student results</span>
+        <span class="tool-tag">One global teacher password</span>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button id="generateLinksBtn">Generate Links</button>
+        <button class="secondary" id="loadDemoBtn">Load Demo</button>
+        <button class="secondary" id="backToDashboardBtn">Back to Dashboard</button>
+      </div>
+      <div id="createMessage"></div>
+    </section>
+
+    <section id="playView" class="card hidden">
+      <div class="pill">Student Activity</div>
+      <h1 id="playTitle">Match Activity</h1>
+      <p class="muted">Match the items. When you finish, your result will be saved automatically.</p>
+      <div id="studentGate">
+        <label for="studentName">Your Name</label>
+        <input id="studentName" placeholder="Enter your name">
+        <div style="margin-top:12px"><button id="startGameBtn">Start</button></div>
+        <div id="studentGateMessage"></div>
+      </div>
+      <div id="gameArea" class="hidden">
+        <div class="stats">
+          <div class="stat">Matched: <span id="matchedCount">0</span></div>
+          <div class="stat">Attempts: <span id="attemptCount">0</span></div>
+          <div class="stat">Time: <span id="timer">0</span>s</div>
         </div>
-        <div id="createMessage"></div>
+        <div class="notice warning" style="margin-bottom:14px">Tap one item on the left and one item on the right. Correct pairs stay locked.</div>
+        <div class="game-grid">
+          <div><h3>Left</h3><div id="leftList" class="option-list"></div></div>
+          <div><h3>Right</h3><div id="rightList" class="option-list"></div></div>
+        </div>
+        <div id="gameMessage"></div>
       </div>
     </section>
 
-    <section id="playView" class="hidden">
-      <div class="card">
-        <div class="pill">Student Activity</div>
-        <h1 id="playTitle">Match Activity</h1>
-        <p class="muted" id="playInstructions">Match the items. When you finish, your result will be saved automatically.</p>
-        <div id="studentGate">
-          <label for="studentName">Your Name</label>
-          <input id="studentName" placeholder="Enter your name" />
-          <div style="margin-top:12px;">
-            <button id="startGameBtn">Start</button>
-          </div>
-          <div id="studentGateMessage"></div>
-        </div>
-        <div id="gameArea" class="hidden">
-          <div class="stats">
-            <div class="stat">Matched: <span id="matchedCount">0</span></div>
-            <div class="stat">Attempts: <span id="attemptCount">0</span></div>
-            <div class="stat">Time: <span id="timer">0</span>s</div>
-          </div>
-          <div class="notice warning" style="margin-bottom:14px;">
-            Tap one item on the left and one item on the right. Correct pairs stay locked.
-          </div>
-          <div class="game-grid">
-            <div>
-              <h3>Left</h3>
-              <div id="leftList" class="option-list"></div>
-            </div>
-            <div>
-              <h3>Right</h3>
-              <div id="rightList" class="option-list"></div>
-            </div>
-          </div>
-          <div id="gameMessage"></div>
-        </div>
+    <section id="resultsView" class="card hidden">
+      <div class="pill">Teacher Results</div>
+      <h1 id="resultsTitle">Results</h1>
+      <div id="resultsMeta" class="muted" style="margin:12px 0 10px"></div>
+      <div class="row" style="margin-bottom:12px">
+        <button class="secondary" id="resultsBackBtn">Back to Dashboard</button>
+        <button class="secondary" id="downloadCsvBtn">Download CSV</button>
       </div>
-    </section>
-
-    <section id="resultsView" class="hidden">
-      <div class="card">
-        <div class="pill">Teacher Results</div>
-        <h1 id="resultsTitle">Results</h1>
-        <div id="resultsMeta" class="muted" style="margin:12px 0 10px;"></div>
-        <div class="row" style="margin-bottom:12px;">
-          <button class="secondary" id="resultsBackBtn">Back to Dashboard</button>
-          <button class="secondary" id="downloadCsvBtn">Download CSV</button>
-        </div>
-        <div id="resultsMessage"></div>
-        <div style="overflow-x:auto; margin-top:12px;">
-          <table id="resultsTable" class="hidden">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Score</th>
-                <th>Total</th>
-                <th>Attempts</th>
-                <th>Duration (s)</th>
-                <th>Completed</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+      <div id="resultsMessage"></div>
+      <div style="overflow-x:auto;margin-top:12px">
+        <table id="resultsTable" class="hidden">
+          <thead>
+            <tr><th>Name</th><th>Score</th><th>Total</th><th>Attempts</th><th>Duration (s)</th><th>Completed</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
   </div>
 
   <div id="finishOverlay" class="overlay hidden">
     <div class="modal">
-      <div class="pill" style="margin-bottom:10px;">Nice work</div>
+      <div class="pill" style="margin-bottom:10px">Nice work</div>
       <h2>Finished</h2>
       <div class="modal-score" id="finishScore">0/0</div>
       <p id="finishDetails" class="muted"></p>
-      <div class="row" style="justify-content:center; margin-top:14px;">
+      <div class="row" style="justify-content:center;margin-top:14px">
         <button id="closeFinishBtn">Close</button>
         <button class="secondary" id="playAgainBtn">Play Again</button>
       </div>
@@ -364,14 +337,12 @@
   </div>
 
   <script>
-    const SUPABASE_URL = "https://cpouyxzsnmoiskxhrcut.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra";
-    const GLOBAL_TEACHER_PASSWORD = "intel123";
-
+    const SUPABASE_URL = 'https://cpouyxzsnmoiskxhrcut.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra';
+    const GLOBAL_TEACHER_PASSWORD = 'teach1234';
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const state = {
-      route: 'login',
       activityId: null,
       activity: null,
       studentName: '',
@@ -389,23 +360,10 @@
       wrongFlashRight: null
     };
 
-    function el(id) {
-      return document.getElementById(id);
-    }
-
-    function isLoggedIn() {
-      return sessionStorage.getItem('teacherLoggedIn') === '1';
-    }
-
-    function setLoggedIn(name) {
-      sessionStorage.setItem('teacherLoggedIn', '1');
-      sessionStorage.setItem('teacherName', name || 'Teacher');
-    }
-
-    function clearLogin() {
-      sessionStorage.removeItem('teacherLoggedIn');
-      sessionStorage.removeItem('teacherName');
-    }
+    function el(id) { return document.getElementById(id); }
+    function isLoggedIn() { return sessionStorage.getItem('teacherLoggedIn') === '1'; }
+    function setLoggedIn(name) { sessionStorage.setItem('teacherLoggedIn', '1'); sessionStorage.setItem('teacherName', name || 'Teacher'); }
+    function clearLogin() { sessionStorage.removeItem('teacherLoggedIn'); sessionStorage.removeItem('teacherName'); }
 
     function escapeHtml(str) {
       return String(str)
@@ -453,29 +411,18 @@
 
     function slugRoute() {
       const url = new URL(window.location.href);
-      return {
-        view: url.searchParams.get('view') || '',
-        id: url.searchParams.get('id')
-      };
+      return { view: url.searchParams.get('view') || '', id: url.searchParams.get('id') };
     }
 
     function goRoute(view, id) {
       const url = new URL(window.location.href);
       url.searchParams.set('view', view);
-      if (id) {
-        url.searchParams.set('id', id);
-      } else {
-        url.searchParams.delete('id');
-      }
+      if (id) url.searchParams.set('id', id); else url.searchParams.delete('id');
       history.pushState({}, '', url);
       initRoute();
     }
 
-    function logout() {
-      clearLogin();
-      goRoute('login');
-    }
-
+    function logout() { clearLogin(); goRoute('login'); }
     window.addEventListener('popstate', initRoute);
 
     function createNavLink(text, handler) {
@@ -483,10 +430,7 @@
       a.href = '#';
       a.textContent = text;
       a.className = 'nav-link';
-      a.addEventListener('click', function(e) {
-        e.preventDefault();
-        handler();
-      });
+      a.addEventListener('click', function(e) { e.preventDefault(); handler(); });
       return a;
     }
 
@@ -494,25 +438,14 @@
       const nav = el('nav');
       nav.innerHTML = '';
       const view = slugRoute().view;
-
       if (view === 'play') return;
-
       if (!isLoggedIn()) {
-        nav.appendChild(createNavLink('Login', function() {
-          goRoute('login');
-        }));
+        nav.appendChild(createNavLink('Login', function() { goRoute('login'); }));
         return;
       }
-
-      nav.appendChild(createNavLink('Dashboard', function() {
-        goRoute('dashboard');
-      }));
-      nav.appendChild(createNavLink('Create', function() {
-        goRoute('create');
-      }));
-      nav.appendChild(createNavLink('Log Out', function() {
-        logout();
-      }));
+      nav.appendChild(createNavLink('Dashboard', function() { goRoute('dashboard'); }));
+      nav.appendChild(createNavLink('Create', function() { goRoute('create'); }));
+      nav.appendChild(createNavLink('Log Out', logout));
     }
 
     function showOnly(idToShow) {
@@ -537,13 +470,9 @@
     }
 
     function parsePairs(text) {
-      const lines = text
-        .split(/
+      const lines = text.split(/
 ?
-/)
-        .map(function(line) { return line.trim(); })
-        .filter(Boolean);
-
+/).map(function(line) { return line.trim(); }).filter(Boolean);
       const parsed = [];
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
@@ -551,15 +480,12 @@
         if (line.includes('|')) separator = '|';
         else if (line.includes(',')) separator = ',';
         else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
-
         const parts = line.split(separator);
         const left = (parts[0] || '').trim();
         const right = parts.slice(1).join(separator).trim();
-
         if (!left || !right) throw new Error('Both sides must contain text: ' + line);
         parsed.push({ left: left, right: right });
       }
-
       if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
       return parsed;
     }
@@ -567,16 +493,8 @@
     function handleLogin() {
       const name = el('loginName').value.trim();
       const pass = el('loginPassword').value.trim();
-
-      if (!name) {
-        setMessage('loginMessage', 'Enter your name.', 'error');
-        return;
-      }
-      if (pass !== GLOBAL_TEACHER_PASSWORD) {
-        setMessage('loginMessage', 'Incorrect password.', 'error');
-        return;
-      }
-
+      if (!name) { setMessage('loginMessage', 'Enter your name.', 'error'); return; }
+      if (pass !== GLOBAL_TEACHER_PASSWORD) { setMessage('loginMessage', 'Incorrect password.', 'error'); return; }
       setLoggedIn(name);
       setMessage('loginMessage', '', '');
       goRoute('dashboard');
@@ -591,60 +509,39 @@
     }
 
     async function loadDashboard() {
-      if (!isLoggedIn()) {
-        goRoute('login');
-        return;
-      }
-
+      if (!isLoggedIn()) { goRoute('login'); return; }
       setMessage('dashboardMessage', 'Loading activities...', 'warning');
-      const result = await client
-        .from('activities')
-        .select('id, title, created_at')
-        .order('created_at', { ascending: false });
-
+      const result = await client.from('activities').select('id, title, created_at').order('created_at', { ascending: false });
       if (result.error) {
         setMessage('dashboardMessage', escapeHtml(result.error.message || 'Could not load activities.'), 'error');
         el('dashboardTable').classList.add('hidden');
         return;
       }
-
       const rows = result.data || [];
       const tbody = el('dashboardTable').querySelector('tbody');
       tbody.innerHTML = '';
       const base = window.location.origin + window.location.pathname;
-
       rows.forEach(function(row) {
         const tr = document.createElement('tr');
-
         const tdTitle = document.createElement('td');
         tdTitle.textContent = row.title;
-
         const tdCreated = document.createElement('td');
         tdCreated.textContent = new Date(row.created_at).toLocaleString();
-
         const tdLinks = document.createElement('td');
         const actions = document.createElement('div');
         actions.className = 'action-links';
-
         const resultsLink = buildInlineLink('Results', '#');
-        resultsLink.addEventListener('click', function(e) {
-          e.preventDefault();
-          goRoute('results', row.id);
-        });
-
+        resultsLink.addEventListener('click', function(e) { e.preventDefault(); goRoute('results', row.id); });
         const studentLink = buildInlineLink('Student Link', base + '?view=play&id=' + row.id);
         studentLink.target = '_blank';
-
         actions.appendChild(resultsLink);
         actions.appendChild(studentLink);
         tdLinks.appendChild(actions);
-
         tr.appendChild(tdTitle);
         tr.appendChild(tdCreated);
         tr.appendChild(tdLinks);
         tbody.appendChild(tr);
       });
-
       el('dashboardTable').classList.remove('hidden');
       setMessage('dashboardMessage', rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.', 'success');
     }
@@ -655,34 +552,16 @@
         const teacherName = el('teacherName').value.trim();
         const title = el('activityTitle').value.trim();
         const pairsRaw = el('pairsInput').value;
-
         if (!teacherName) throw new Error('Enter your name.');
         if (!title) throw new Error('Enter an activity title.');
-
         const pairs = parsePairs(pairsRaw);
-
-        const result = await client
-          .from('activities')
-          .insert([{ title: title, teacher_name: teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }])
-          .select()
-          .single();
-
+        const result = await client.from('activities').insert([{ title: title, teacher_name: teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }]).select().single();
         if (result.error) throw result.error;
-
         const activity = result.data;
         const base = window.location.origin + window.location.pathname;
         const studentLink = base + '?view=play&id=' + activity.id;
         const resultsLink = base + '?view=results&id=' + activity.id;
-
-        setMessage(
-          'createMessage',
-          'Activity created.<br><br>' +
-          '<strong>Student Link:</strong><br>' +
-          '<a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br>' +
-          '<strong>Results Link:</strong><br>' +
-          '<a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>',
-          'success'
-        );
+        setMessage('createMessage', 'Activity created.<br><br><strong>Student Link:</strong><br><a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br><strong>Results Link:</strong><br><a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>', 'success');
       } catch (err) {
         setMessage('createMessage', escapeHtml(err.message || 'Could not create activity.'), 'error');
       }
@@ -690,18 +569,12 @@
 
     async function loadActivityForPlay(id) {
       setMessage('studentGateMessage', 'Loading activity...', 'warning');
-      const result = await client
-        .from('activities')
-        .select('id, title, pairs')
-        .eq('id', id)
-        .single();
-
+      const result = await client.from('activities').select('id, title, pairs').eq('id', id).single();
       if (result.error || !result.data) {
         el('playTitle').textContent = 'Activity not found';
         setMessage('studentGateMessage', 'Could not load this activity.', 'error');
         return;
       }
-
       state.activity = result.data;
       state.activityId = result.data.id;
       el('playTitle').textContent = result.data.title;
@@ -729,34 +602,16 @@
 
     function startGame() {
       const studentName = el('studentName').value.trim();
-      if (!studentName) {
-        setMessage('studentGateMessage', 'Please enter your name.', 'error');
-        return;
-      }
-      if (!state.activity || !state.activity.pairs) {
-        setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
-        return;
-      }
-
+      if (!studentName) { setMessage('studentGateMessage', 'Please enter your name.', 'error'); return; }
+      if (!state.activity || !state.activity.pairs) { setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error'); return; }
       state.studentName = studentName;
       resetGameState();
       el('studentGate').classList.add('hidden');
       el('gameArea').classList.remove('hidden');
-
-      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return { id: 'L' + index, pairId: index, text: pair.left };
-      }));
-
-      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return { id: 'R' + index, pairId: index, text: pair.right };
-      }));
-
+      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) { return { id: 'L' + index, pairId: index, text: pair.left }; }));
+      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) { return { id: 'R' + index, pairId: index, text: pair.right }; }));
       state.startTs = Date.now();
-      state.timerInt = setInterval(function() {
-        const secs = Math.floor((Date.now() - state.startTs) / 1000);
-        el('timer').textContent = String(secs);
-      }, 1000);
-
+      state.timerInt = setInterval(function() { el('timer').textContent = String(Math.floor((Date.now() - state.startTs) / 1000)); }, 1000);
       renderGame();
     }
 
@@ -765,7 +620,6 @@
       const rightList = el('rightList');
       leftList.innerHTML = '';
       rightList.innerHTML = '';
-
       state.leftItems.forEach(function(item) {
         const btn = document.createElement('button');
         btn.className = 'match-btn';
@@ -773,12 +627,9 @@
         if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
         if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
         btn.textContent = item.text;
-        btn.addEventListener('click', function() {
-          selectLeft(item.id);
-        });
+        btn.addEventListener('click', function() { selectLeft(item.id); });
         leftList.appendChild(btn);
       });
-
       state.rightItems.forEach(function(item) {
         const btn = document.createElement('button');
         btn.className = 'match-btn';
@@ -786,29 +637,15 @@
         if (state.matchedRight.has(item.id)) btn.classList.add('correct');
         if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
         btn.textContent = item.text;
-        btn.addEventListener('click', function() {
-          selectRight(item.id);
-        });
+        btn.addEventListener('click', function() { selectRight(item.id); });
         rightList.appendChild(btn);
       });
-
       el('matchedCount').textContent = String(state.matchedLeft.size);
       el('attemptCount').textContent = String(state.attempts);
     }
 
-    function selectLeft(id) {
-      if (state.matchedLeft.has(id)) return;
-      state.selectedLeft = id;
-      renderGame();
-      maybeCheckMatch();
-    }
-
-    function selectRight(id) {
-      if (state.matchedRight.has(id)) return;
-      state.selectedRight = id;
-      renderGame();
-      maybeCheckMatch();
-    }
+    function selectLeft(id) { if (state.matchedLeft.has(id)) return; state.selectedLeft = id; renderGame(); maybeCheckMatch(); }
+    function selectRight(id) { if (state.matchedRight.has(id)) return; state.selectedRight = id; renderGame(); maybeCheckMatch(); }
 
     function clearWrongFlashSoon() {
       setTimeout(function() {
@@ -820,11 +657,9 @@
 
     function maybeCheckMatch() {
       if (!state.selectedLeft || !state.selectedRight) return;
-
       const left = state.leftItems.find(function(item) { return item.id === state.selectedLeft; });
       const right = state.rightItems.find(function(item) { return item.id === state.selectedRight; });
       state.attempts += 1;
-
       if (left.pairId === right.pairId) {
         state.matchedLeft.add(left.id);
         state.matchedRight.add(right.id);
@@ -839,11 +674,9 @@
         playTone('wrong');
         clearWrongFlashSoon();
       }
-
       state.selectedLeft = null;
       state.selectedRight = null;
       renderGame();
-
       if (state.matchedLeft.size === state.leftItems.length) finishGame();
     }
 
@@ -852,80 +685,43 @@
       const duration = Math.floor((Date.now() - state.startTs) / 1000);
       const total = state.leftItems.length;
       const score = total;
-
       setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
-      const result = await client.from('submissions').insert([{
-        activity_id: state.activityId,
-        student_name: state.studentName,
-        score: score,
-        total: total,
-        attempts: state.attempts,
-        duration_seconds: duration
-      }]);
-
+      const result = await client.from('submissions').insert([{ activity_id: state.activityId, student_name: state.studentName, score: score, total: total, attempts: state.attempts, duration_seconds: duration }]);
       if (result.error) {
         setMessage('gameMessage', 'You finished, but the result could not be saved.', 'error');
         return;
       }
-
       setMessage('gameMessage', 'Done. Your result was saved.', 'success');
       el('finishScore').textContent = score + '/' + total;
       el('finishDetails').innerHTML = 'Attempts: <strong>' + state.attempts + '</strong> | Time: <strong>' + duration + 's</strong>';
       el('finishOverlay').classList.remove('hidden');
     }
 
-    function closeFinishOverlay() {
-      el('finishOverlay').classList.add('hidden');
-    }
-
-    function playAgain() {
-      closeFinishOverlay();
-      el('studentGate').classList.remove('hidden');
-      el('gameArea').classList.add('hidden');
-      el('studentName').value = state.studentName;
-      resetGameState();
-    }
+    function closeFinishOverlay() { el('finishOverlay').classList.add('hidden'); }
+    function playAgain() { closeFinishOverlay(); el('studentGate').classList.remove('hidden'); el('gameArea').classList.add('hidden'); el('studentName').value = state.studentName; resetGameState(); }
 
     async function loadResults() {
       try {
         setMessage('resultsMessage', 'Loading results...', 'warning');
         if (!state.activityId) throw new Error('Missing activity id.');
-
-        const activityResult = await client
-          .from('activities')
-          .select('id, title, created_at')
-          .eq('id', state.activityId)
-          .single();
-
+        const activityResult = await client.from('activities').select('id, title, created_at').eq('id', state.activityId).single();
         if (activityResult.error || !activityResult.data) throw new Error('Could not load activity.');
-
-        const rowsResult = await client
-          .from('submissions')
-          .select('student_name, score, total, attempts, duration_seconds, created_at')
-          .eq('activity_id', state.activityId)
-          .order('created_at', { ascending: false });
-
+        const rowsResult = await client.from('submissions').select('student_name, score, total, attempts, duration_seconds, created_at').eq('activity_id', state.activityId).order('created_at', { ascending: false });
         if (rowsResult.error) throw rowsResult.error;
-
         state.resultsRows = rowsResult.data || [];
         el('resultsTitle').textContent = 'Results: ' + activityResult.data.title;
         el('resultsMeta').textContent = 'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
-
         const tbody = el('resultsTable').querySelector('tbody');
         tbody.innerHTML = '';
         state.resultsRows.forEach(function(row) {
           const tr = document.createElement('tr');
-          ['student_name', 'score', 'total', 'attempts', 'duration_seconds'].forEach(function(key) {
+          [row.student_name, row.score, row.total, row.attempts, row.duration_seconds, new Date(row.created_at).toLocaleString()].forEach(function(value) {
             const td = document.createElement('td');
-            td.textContent = String(row[key]);
+            td.textContent = String(value);
             tr.appendChild(td);
           });
-          const completedTd = document.createElement('td');
-          completedTd.textContent = new Date(row.created_at).toLocaleString();
-          tr.appendChild(completedTd);
           tbody.appendChild(tr);
         });
-
         el('resultsTable').classList.remove('hidden');
         setMessage('resultsMessage', state.resultsRows.length + ' submission(s) loaded.', 'success');
       } catch (err) {
@@ -935,25 +731,10 @@
     }
 
     function downloadCsv() {
-      if (!state.resultsRows.length) {
-        setMessage('resultsMessage', 'No results loaded yet.', 'error');
-        return;
-      }
-
-      const lines = [
-        ['Name', 'Score', 'Total', 'Attempts', 'DurationSeconds', 'CompletedAt'].join(','),
-        ...state.resultsRows.map(function(row) {
-          return [
-            csvSafe(row.student_name),
-            row.score,
-            row.total,
-            row.attempts,
-            row.duration_seconds,
-            csvSafe(new Date(row.created_at).toLocaleString())
-          ].join(',');
-        })
-      ];
-
+      if (!state.resultsRows.length) { setMessage('resultsMessage', 'No results loaded yet.', 'error'); return; }
+      const lines = [['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(',')].concat(state.resultsRows.map(function(row) {
+        return [csvSafe(row.student_name), row.score, row.total, row.attempts, row.duration_seconds, csvSafe(new Date(row.created_at).toLocaleString())].join(',');
+      }));
       const blob = new Blob([lines.join('
 ')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -991,10 +772,8 @@
       const routeInfo = slugRoute();
       const view = routeInfo.view;
       const id = routeInfo.id;
-      state.route = view;
       state.activityId = id || null;
       renderNav();
-
       if (view === 'play' && id) {
         showOnly('playView');
         closeFinishOverlay();
@@ -1005,18 +784,15 @@
         await loadActivityForPlay(id);
         return;
       }
-
       if (!isLoggedIn()) {
         showOnly('loginView');
         return;
       }
-
       if (view === 'create') {
         showOnly('createView');
         el('teacherName').value = sessionStorage.getItem('teacherName') || '';
         return;
       }
-
       if (view === 'results' && id) {
         showOnly('resultsView');
         el('resultsTitle').textContent = 'Results';
@@ -1026,7 +802,6 @@
         await loadResults();
         return;
       }
-
       showOnly('dashboardView');
       await loadDashboard();
     }
