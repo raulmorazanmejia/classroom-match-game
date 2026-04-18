@@ -7,19 +7,20 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #f6f7fb;
+      --bg: #eef2ff;
       --card: #ffffff;
       --text: #1f2937;
       --muted: #6b7280;
       --line: #d1d5db;
-      --accent: #2563eb;
-      --accent-2: #1d4ed8;
-      --good: #047857;
-      --bad: #b91c1c;
-      --soft: #eef2ff;
-      --warn: #92400e;
-      --shadow: 0 10px 30px rgba(0,0,0,0.08);
-      --radius: 18px;
+      --accent: #4f46e5;
+      --accent-2: #4338ca;
+      --good: #059669;
+      --bad: #dc2626;
+      --soft: #e0e7ff;
+      --warn: #d97706;
+      --yellow: #fbbf24;
+      --shadow: 0 14px 34px rgba(79, 70, 229, 0.12);
+      --radius: 22px;
     }
 
     * { box-sizing: border-box; }
@@ -27,32 +28,34 @@
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       color: var(--text);
-      background: var(--bg);
+      background:
+        radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
     }
 
     .wrap {
-      max-width: 980px;
+      max-width: 1100px;
       margin: 0 auto;
-      padding: 20px;
+      padding: 24px 18px 40px;
     }
 
     .card {
       background: var(--card);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      padding: 20px;
+      padding: 22px;
       margin-bottom: 18px;
     }
 
     h1, h2, h3 { margin-top: 0; }
-    h1 { font-size: 2rem; }
-    h2 { font-size: 1.4rem; }
+    h1 { font-size: 2.1rem; margin-bottom: 10px; }
+    h2 { font-size: 1.35rem; }
+    h3 { font-size: 1.05rem; }
     p { line-height: 1.5; }
 
     .muted { color: var(--muted); }
     .hidden { display: none !important; }
     .row { display: flex; gap: 14px; flex-wrap: wrap; }
-    .col { flex: 1 1 300px; }
+    .col { flex: 1 1 320px; }
 
     label {
       display: block;
@@ -60,36 +63,43 @@
       margin-bottom: 6px;
     }
 
-    input, textarea, select {
+    input, textarea {
       width: 100%;
       border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 12px 14px;
+      border-radius: 14px;
+      padding: 13px 14px;
       font-size: 1rem;
       background: white;
     }
 
     textarea {
-      min-height: 220px;
+      min-height: 230px;
       resize: vertical;
       font-family: Consolas, monospace;
     }
 
     button {
       border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
+      border-radius: 16px;
+      padding: 13px 18px;
       font-size: 1rem;
       font-weight: 700;
       cursor: pointer;
       background: var(--accent);
       color: white;
+      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
     }
 
-    button:hover { background: var(--accent-2); }
+    button:hover {
+      background: var(--accent-2);
+      transform: translateY(-1px);
+    }
+
     button.secondary {
       background: #e5e7eb;
       color: #111827;
+      box-shadow: none;
     }
     button.secondary:hover { background: #d1d5db; }
 
@@ -98,16 +108,16 @@
       background: var(--soft);
       color: var(--accent-2);
       border-radius: 999px;
-      padding: 6px 10px;
-      font-size: 0.9rem;
+      padding: 7px 12px;
+      font-size: 0.92rem;
       font-weight: 700;
     }
 
     .notice {
       border-left: 5px solid var(--accent);
-      background: #eff6ff;
+      background: #eef2ff;
       padding: 12px 14px;
-      border-radius: 12px;
+      border-radius: 14px;
       margin-top: 12px;
     }
 
@@ -139,17 +149,21 @@
     .topnav a {
       text-decoration: none;
       background: white;
-      padding: 10px 14px;
-      border-radius: 12px;
+      padding: 11px 16px;
+      border-radius: 14px;
       color: var(--text);
       font-weight: 700;
       box-shadow: var(--shadow);
     }
 
+    .hero {
+      background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
+    }
+
     .game-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 18px;
       align-items: start;
     }
 
@@ -163,28 +177,37 @@
       text-align: left;
       background: white;
       color: var(--text);
-      border: 2px solid #dbeafe;
-      border-radius: 16px;
+      border: 2px solid #c7d2fe;
+      border-radius: 18px;
       padding: 16px;
       font-weight: 700;
-      min-height: 64px;
-      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+      min-height: 68px;
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
+      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
     }
 
-    .match-btn:hover { background: #f8fbff; }
+    .match-btn:hover {
+      background: #f8faff;
+      transform: scale(1.02);
+    }
+
     .match-btn.selected {
       border-color: var(--accent);
-      background: #dbeafe;
+      background: #ddd6fe;
     }
+
     .match-btn.correct {
       border-color: #10b981;
       background: #d1fae5;
       color: #065f46;
       cursor: default;
+      transform: none;
     }
-    .match-btn.disabled {
-      opacity: 0.7;
-      cursor: not-allowed;
+
+    .match-btn.wrong {
+      border-color: #f87171;
+      background: #fee2e2;
+      color: #991b1b;
     }
 
     .stats {
@@ -200,6 +223,18 @@
       padding: 10px 12px;
       box-shadow: var(--shadow);
       font-weight: 700;
+    }
+
+    .tool-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: white;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+      margin-right: 8px;
+      margin-bottom: 8px;
     }
 
     table {
@@ -225,12 +260,45 @@
       border-radius: 6px;
     }
 
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal {
+      width: min(520px, 100%);
+      background: white;
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+      text-align: center;
+    }
+
+    .modal h2 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    .modal-score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-2);
+      margin: 10px 0 16px;
+    }
+
     @media (max-width: 720px) {
       .wrap { padding: 14px; }
       .game-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 1.55rem; }
+      h1 { font-size: 1.6rem; }
       .card { padding: 16px; }
       button, input, textarea { font-size: 16px; }
+      .topnav a { padding: 10px 14px; }
     }
   </style>
 </head>
@@ -238,7 +306,7 @@
   <div class="wrap">
     <div class="topnav" id="nav"></div>
 
-    <section id="homeView" class="card hidden">
+    <section id="homeView" class="card hero hidden">
       <h1>Assignable Match Game</h1>
       <p class="muted">Create a mobile-friendly match activity, share the student link, and review submissions later.</p>
       <div class="row">
@@ -257,7 +325,7 @@
     <section id="createView" class="hidden">
       <div class="card">
         <h1>Create Match Activity</h1>
-        <p class="muted">Format each line like this: <code class="inline">left item, right item</code></p>
+        <p class="muted">Format each line like this: <code class="inline">left item, right item</code> or <code class="inline">left item | right item</code></p>
 
         <div class="row">
           <div class="col">
@@ -265,28 +333,22 @@
             <input id="teacherName" placeholder="Your name" />
           </div>
           <div class="col">
-            <label for="teacherPass">Teacher Password</label>
-            <input id="teacherPass" type="password" placeholder="A simple password you choose" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col">
             <label for="activityTitle">Activity Title</label>
             <input id="activityTitle" placeholder="Passive Voice Match Practice" />
           </div>
         </div>
 
         <label for="pairsInput">Pairs</label>
-        <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen, was stolen last night&#10;broken, was broken by the wind"></textarea>
+        <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
 
-        <div class="stats">
-          <div class="stat">Mobile-friendly</div>
-          <div class="stat">Tap-to-match</div>
-          <div class="stat">Stores student results</div>
+        <div style="margin-top:14px;">
+          <span class="tool-tag">Mobile-friendly</span>
+          <span class="tool-tag">Tap-to-match</span>
+          <span class="tool-tag">Stores student results</span>
+          <span class="tool-tag">One global teacher password</span>
         </div>
 
-        <div class="row">
+        <div class="row" style="margin-top:14px;">
           <button onclick="createActivity()">Generate Links</button>
           <button class="secondary" onclick="loadDemo()">Load Demo</button>
         </div>
@@ -341,7 +403,7 @@
         <div class="row">
           <div class="col">
             <label for="resultsPass">Teacher Password</label>
-            <input id="resultsPass" type="password" placeholder="Enter the password for this activity" />
+            <input id="resultsPass" type="password" placeholder="Enter the global teacher password" />
           </div>
           <div class="col" style="display:flex; align-items:flex-end; gap:10px;">
             <button onclick="loadResults()">Load Results</button>
@@ -369,12 +431,29 @@
     </section>
   </div>
 
+  <div id="finishOverlay" class="overlay hidden">
+    <div class="modal">
+      <div class="pill" style="margin-bottom:10px;">Nice work</div>
+      <h2>Finished</h2>
+      <div class="modal-score" id="finishScore">0/0</div>
+      <p id="finishDetails" class="muted"></p>
+      <div class="row" style="justify-content:center; margin-top:14px;">
+        <button onclick="closeFinishOverlay()">Close</button>
+        <button class="secondary" onclick="playAgain()">Play Again</button>
+      </div>
+    </div>
+  </div>
+
+  <audio id="correctSound" preload="auto"></audio>
+  <audio id="wrongSound" preload="auto"></audio>
+
   <script>
     // ======================
-    // 1) CONFIGURE THESE TWO VALUES
+    // CONFIGURE THESE VALUES
     // ======================
     const SUPABASE_URL = "https://cpouyxzsnmoiskxhrcut.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra";
+    const GLOBAL_TEACHER_PASSWORD = "teach1234"; // change this once, for the whole app
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -393,9 +472,11 @@
       startTs: null,
       timerInt: null,
       resultsRows: [],
+      wrongFlash: { left: null, right: null },
     };
 
     function el(id) { return document.getElementById(id); }
+
     function escapeHtml(str) {
       return String(str)
         .replaceAll('&', '&amp;')
@@ -417,6 +498,26 @@
         [copy[i], copy[j]] = [copy[j], copy[i]];
       }
       return copy;
+    }
+
+    function playTone(kind) {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = kind === 'correct' ? 660 : 220;
+        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
+        oscillator.start();
+        oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
+      } catch (e) {
+        // silent fallback
+      }
     }
 
     function slugRoute() {
@@ -455,36 +556,46 @@
 
     function loadDemo() {
       el('teacherName').value = 'Raul';
-      el('teacherPass').value = 'teach123';
       el('activityTitle').value = 'Passive Voice Match';
       el('pairsInput').value = [
         'destroyed, was destroyed by the tornado',
-        'stolen, was stolen last night',
+        'stolen | was stolen last night',
         'repaired, is being repaired now',
         'painted, was painted by students',
         'broken, was broken by the wind'
-      ].join('\n');
+      ].join('
+');
     }
 
     function parsePairs(text) {
       const lines = text
-        .split(/\r?\n/)
+        .split(/
+?
+/)
         .map(line => line.trim())
         .filter(Boolean);
 
       const parsed = [];
       for (const line of lines) {
-        const commaIndex = line.indexOf(',');
-        if (commaIndex === -1) {
-          throw new Error(`Each line must contain one comma: ${line}`);
+        let parts;
+        if (line.includes('|')) {
+          parts = line.split('|');
+        } else if (line.includes(',')) {
+          parts = line.split(',');
+        } else {
+          throw new Error(`Each line must contain one comma or one vertical bar: ${line}`);
         }
-        const left = line.slice(0, commaIndex).trim();
-        const right = line.slice(commaIndex + 1).trim();
+
+        const left = (parts[0] || '').trim();
+        const right = parts.slice(1).join(parts === line.split('|') ? '|' : ',').trim();
+
         if (!left || !right) {
           throw new Error(`Both sides must contain text: ${line}`);
         }
+
         parsed.push({ left, right });
       }
+
       if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
       return parsed;
     }
@@ -493,19 +604,17 @@
       try {
         setMessage('createMessage', 'Saving activity...', 'warning');
         const teacher_name = el('teacherName').value.trim();
-        const teacher_password = el('teacherPass').value.trim();
         const title = el('activityTitle').value.trim();
         const pairsRaw = el('pairsInput').value;
 
         if (!teacher_name) throw new Error('Enter your name.');
-        if (!teacher_password || teacher_password.length < 4) throw new Error('Use a simple teacher password with at least 4 characters.');
         if (!title) throw new Error('Enter an activity title.');
 
         const pairs = parsePairs(pairsRaw);
 
         const { data, error } = await client
           .from('activities')
-          .insert([{ title, teacher_name, teacher_password, pairs }])
+          .insert([{ title, teacher_name, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs }])
           .select()
           .single();
 
@@ -558,6 +667,7 @@
       state.matchedRight = new Set();
       state.attempts = 0;
       state.startTs = null;
+      state.wrongFlash = { left: null, right: null };
       if (state.timerInt) clearInterval(state.timerInt);
       state.timerInt = null;
       el('matchedCount').textContent = '0';
@@ -606,14 +716,16 @@
     function renderGame() {
       const leftHtml = state.leftItems.map(item => {
         const selected = state.selectedLeft === item.id ? 'selected' : '';
-        const correct = state.matchedLeft.has(item.id) ? 'correct disabled' : '';
-        return `<button class="match-btn ${selected} ${correct}" onclick="selectLeft('${item.id}')">${escapeHtml(item.text)}</button>`;
+        const correct = state.matchedLeft.has(item.id) ? 'correct' : '';
+        const wrong = state.wrongFlash.left === item.id ? 'wrong' : '';
+        return `<button class="match-btn ${selected} ${correct} ${wrong}" onclick="selectLeft('${item.id}')">${escapeHtml(item.text)}</button>`;
       }).join('');
 
       const rightHtml = state.rightItems.map(item => {
         const selected = state.selectedRight === item.id ? 'selected' : '';
-        const correct = state.matchedRight.has(item.id) ? 'correct disabled' : '';
-        return `<button class="match-btn ${selected} ${correct}" onclick="selectRight('${item.id}')">${escapeHtml(item.text)}</button>`;
+        const correct = state.matchedRight.has(item.id) ? 'correct' : '';
+        const wrong = state.wrongFlash.right === item.id ? 'wrong' : '';
+        return `<button class="match-btn ${selected} ${correct} ${wrong}" onclick="selectRight('${item.id}')">${escapeHtml(item.text)}</button>`;
       }).join('');
 
       el('leftList').innerHTML = leftHtml;
@@ -636,6 +748,13 @@
       maybeCheckMatch();
     }
 
+    function clearWrongFlashSoon() {
+      setTimeout(() => {
+        state.wrongFlash = { left: null, right: null };
+        renderGame();
+      }, 500);
+    }
+
     function maybeCheckMatch() {
       if (!state.selectedLeft || !state.selectedRight) return;
 
@@ -646,9 +765,14 @@
       if (left.pairId === right.pairId) {
         state.matchedLeft.add(left.id);
         state.matchedRight.add(right.id);
-        setMessage('gameMessage', 'Correct.', 'success');
+        state.wrongFlash = { left: null, right: null };
+        setMessage('gameMessage', 'Nice! Correct match.', 'success');
+        playTone('correct');
       } else {
-        setMessage('gameMessage', 'Not a match. Try again.', 'error');
+        state.wrongFlash = { left: left.id, right: right.id };
+        setMessage('gameMessage', 'Try again.', 'error');
+        playTone('wrong');
+        clearWrongFlashSoon();
       }
 
       state.selectedLeft = null;
@@ -682,11 +806,22 @@
         return;
       }
 
-      setMessage(
-        'gameMessage',
-        `Done. Your result was saved.<br><br><strong>Score:</strong> ${score}/${total}<br><strong>Attempts:</strong> ${state.attempts}<br><strong>Time:</strong> ${duration}s`,
-        'success'
-      );
+      setMessage('gameMessage', 'Done. Your result was saved.', 'success');
+      el('finishScore').textContent = `${score}/${total}`;
+      el('finishDetails').innerHTML = `Attempts: <strong>${state.attempts}</strong> &nbsp; | &nbsp; Time: <strong>${duration}s</strong>`;
+      el('finishOverlay').classList.remove('hidden');
+    }
+
+    function closeFinishOverlay() {
+      el('finishOverlay').classList.add('hidden');
+    }
+
+    function playAgain() {
+      closeFinishOverlay();
+      el('studentGate').classList.remove('hidden');
+      el('gameArea').classList.add('hidden');
+      el('studentName').value = state.studentName;
+      resetGameState();
     }
 
     async function loadResults() {
@@ -694,16 +829,16 @@
         setMessage('resultsMessage', 'Loading results...', 'warning');
         const pass = el('resultsPass').value.trim();
         if (!pass) throw new Error('Enter the teacher password.');
+        if (pass !== GLOBAL_TEACHER_PASSWORD) throw new Error('Incorrect teacher password.');
         if (!state.activityId) throw new Error('Missing activity id.');
 
         const { data: activity, error: activityError } = await client
           .from('activities')
-          .select('id, title, teacher_password, created_at')
+          .select('id, title, created_at')
           .eq('id', state.activityId)
           .single();
 
         if (activityError || !activity) throw new Error('Could not load activity.');
-        if (pass !== activity.teacher_password) throw new Error('Incorrect teacher password.');
 
         const { data: rows, error: rowsError } = await client
           .from('submissions')
@@ -755,7 +890,8 @@
         ].join(','))
       ];
 
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -766,7 +902,8 @@
 
     function csvSafe(value) {
       const text = String(value ?? '');
-      if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+      if (text.includes(',') || text.includes('"') || text.includes('
+')) {
         return '"' + text.replaceAll('"', '""') + '"';
       }
       return text;
@@ -785,6 +922,7 @@
 
       if (view === 'play' && id) {
         showOnly('playView');
+        closeFinishOverlay();
         el('studentGate').classList.remove('hidden');
         el('gameArea').classList.add('hidden');
         el('studentName').value = '';
@@ -808,4 +946,6 @@
     initRoute();
   </script>
 </body>
+</html>
+
 </html>
