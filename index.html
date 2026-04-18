@@ -13,16 +13,17 @@
       --muted: #6b7280;
       --line: #d1d5db;
       --accent: #4f46e5;
-      --accent-2: #4338ca;
+      --accent2: #4338ca;
       --good: #059669;
       --bad: #dc2626;
-      --soft: #e0e7ff;
       --warn: #d97706;
+      --soft: #e0e7ff;
       --shadow: 0 14px 34px rgba(79, 70, 229, 0.12);
       --radius: 22px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
@@ -30,7 +31,11 @@
       background: radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
     }
 
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 18px 40px; }
+    .wrap {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 24px 18px 40px;
+    }
 
     .card {
       background: var(--card);
@@ -42,14 +47,18 @@
 
     h1, h2, h3 { margin-top: 0; }
     h1 { font-size: 2rem; margin-bottom: 10px; }
-    h2 { font-size: 1.35rem; }
     p { line-height: 1.5; }
 
     .muted { color: var(--muted); }
     .hidden { display: none !important; }
     .row { display: flex; gap: 14px; flex-wrap: wrap; }
     .col { flex: 1 1 320px; }
-    label { display: block; font-weight: 700; margin-bottom: 6px; }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
 
     input, textarea {
       width: 100%;
@@ -57,10 +66,14 @@
       border-radius: 14px;
       padding: 13px 14px;
       font-size: 1rem;
-      background: white;
+      background: #fff;
     }
 
-    textarea { min-height: 240px; resize: vertical; font-family: Consolas, monospace; }
+    textarea {
+      min-height: 240px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+    }
 
     button {
       border: none;
@@ -70,18 +83,24 @@
       font-weight: 700;
       cursor: pointer;
       background: var(--accent);
-      color: white;
+      color: #fff;
       box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
     }
 
-    button:hover { background: var(--accent-2); }
-    button.secondary { background: #e5e7eb; color: #111827; box-shadow: none; }
+    button:hover { background: var(--accent2); }
+
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: none;
+    }
+
     button.secondary:hover { background: #d1d5db; }
 
     .pill {
       display: inline-block;
       background: var(--soft);
-      color: var(--accent-2);
+      color: var(--accent2);
       border-radius: 999px;
       padding: 7px 12px;
       font-size: 0.92rem;
@@ -100,7 +119,12 @@
     .success { border-left-color: var(--good); background: #ecfdf5; color: #065f46; }
     .warning { border-left-color: var(--warn); background: #fffbeb; color: #78350f; }
 
-    .topnav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .topnav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
 
     .nav-link, .inline-link {
       text-decoration: none;
@@ -113,7 +137,13 @@
       display: inline-block;
     }
 
-    .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .game-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
     .option-list { display: grid; gap: 12px; }
 
     .match-btn {
@@ -130,13 +160,43 @@
       transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
     }
 
-    .match-btn:hover { background: #f8faff; transform: scale(1.01); }
-    .match-btn.selected { border-color: var(--accent); background: #ddd6fe; }
-    .match-btn.correct { border-color: #10b981; background: #d1fae5; color: #065f46; cursor: default; }
-    .match-btn.wrong { border-color: #f87171; background: #fee2e2; color: #991b1b; }
+    .match-btn:hover {
+      background: #f8faff;
+      transform: scale(1.01);
+    }
 
-    .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
-    .stat { background: white; border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow); font-weight: 700; }
+    .match-btn.selected {
+      border-color: var(--accent);
+      background: #ddd6fe;
+    }
+
+    .match-btn.correct {
+      border-color: #10b981;
+      background: #d1fae5;
+      color: #065f46;
+      cursor: default;
+    }
+
+    .match-btn.wrong {
+      border-color: #f87171;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+
+    .stat {
+      background: white;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+    }
 
     .tool-tag {
       display: inline-flex;
@@ -168,7 +228,11 @@
 
     th { background: #f9fafb; }
 
-    .action-links { display: flex; gap: 10px; flex-wrap: wrap; }
+    .action-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
 
     .overlay {
       position: fixed;
@@ -186,11 +250,16 @@
       background: white;
       border-radius: 22px;
       padding: 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.22);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
       text-align: center;
     }
 
-    .modal-score { font-size: 2.2rem; font-weight: 800; color: var(--accent-2); margin: 10px 0 16px; }
+    .modal-score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent2);
+      margin: 10px 0 16px;
+    }
 
     @media (max-width: 720px) {
       .wrap { padding: 14px; }
@@ -218,7 +287,9 @@
           <input id="loginPassword" type="password" placeholder="Teacher password">
         </div>
       </div>
-      <div class="row" style="margin-top:14px"><button id="loginBtn">Log In</button></div>
+      <div class="row" style="margin-top:14px">
+        <button id="loginBtn">Log In</button>
+      </div>
       <div id="loginMessage"></div>
     </section>
 
@@ -233,7 +304,11 @@
       <div style="overflow-x:auto;margin-top:12px">
         <table id="dashboardTable" class="hidden">
           <thead>
-            <tr><th>Activity</th><th>Created</th><th>Links</th></tr>
+            <tr>
+              <th>Activity</th>
+              <th>Created</th>
+              <th>Links</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -276,7 +351,9 @@
       <div id="studentGate">
         <label for="studentName">Your Name</label>
         <input id="studentName" placeholder="Enter your name">
-        <div style="margin-top:12px"><button id="startGameBtn">Start</button></div>
+        <div style="margin-top:12px">
+          <button id="startGameBtn">Start</button>
+        </div>
         <div id="studentGateMessage"></div>
       </div>
       <div id="gameArea" class="hidden">
@@ -285,10 +362,18 @@
           <div class="stat">Attempts: <span id="attemptCount">0</span></div>
           <div class="stat">Time: <span id="timer">0</span>s</div>
         </div>
-        <div class="notice warning" style="margin-bottom:14px">Tap one item on the left and one item on the right. Correct pairs stay locked.</div>
+        <div class="notice warning" style="margin-bottom:14px">
+          Tap one item on the left and one item on the right. Correct pairs stay locked.
+        </div>
         <div class="game-grid">
-          <div><h3>Left</h3><div id="leftList" class="option-list"></div></div>
-          <div><h3>Right</h3><div id="rightList" class="option-list"></div></div>
+          <div>
+            <h3>Left</h3>
+            <div id="leftList" class="option-list"></div>
+          </div>
+          <div>
+            <h3>Right</h3>
+            <div id="rightList" class="option-list"></div>
+          </div>
         </div>
         <div id="gameMessage"></div>
       </div>
@@ -306,7 +391,14 @@
       <div style="overflow-x:auto;margin-top:12px">
         <table id="resultsTable" class="hidden">
           <thead>
-            <tr><th>Name</th><th>Score</th><th>Total</th><th>Attempts</th><th>Duration (s)</th><th>Completed</th></tr>
+            <tr>
+              <th>Name</th>
+              <th>Score</th>
+              <th>Total</th>
+              <th>Attempts</th>
+              <th>Duration (s)</th>
+              <th>Completed</th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -331,6 +423,7 @@
     const SUPABASE_URL = 'https://cpouyxzsnmoiskxhrcut.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra';
     const GLOBAL_TEACHER_PASSWORD = 'intel123';
+
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const state = {
@@ -456,13 +549,16 @@
       const nav = el('nav');
       nav.innerHTML = '';
       const view = slugRoute().view;
+
       if (view === 'play') return;
+
       if (!isLoggedIn()) {
         nav.appendChild(createNavLink('Login', function() {
           goRoute('login');
         }));
         return;
       }
+
       nav.appendChild(createNavLink('Dashboard', function() {
         goRoute('dashboard');
       }));
@@ -491,44 +587,59 @@
         'repaired, is being repaired now',
         'painted, was painted by students',
         'broken, was broken by the wind'
-      ].join('
-');
+      ].join('\n');
     }
 
     function parsePairs(text) {
-      const lines = text.split(/
-?
-/).map(function(line) {
-        return line.trim();
-      }).filter(Boolean);
+      const lines = text
+        .split(/\r?\n/)
+        .map(function(line) {
+          return line.trim();
+        })
+        .filter(Boolean);
+
       const parsed = [];
+
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         let separator = null;
+
         if (line.indexOf('|') !== -1) separator = '|';
         else if (line.indexOf(',') !== -1) separator = ',';
         else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
+
         const parts = line.split(separator);
         const left = (parts[0] || '').trim();
         const right = parts.slice(1).join(separator).trim();
-        if (!left || !right) throw new Error('Both sides must contain text: ' + line);
+
+        if (!left || !right) {
+          throw new Error('Both sides must contain text: ' + line);
+        }
+
         parsed.push({ left: left, right: right });
       }
-      if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
+
+      if (parsed.length < 2) {
+        throw new Error('Please add at least 2 pairs.');
+      }
+
       return parsed;
     }
 
     function handleLogin() {
       const name = el('loginName').value.trim();
       const pass = el('loginPassword').value.trim();
+
       if (!name) {
         setMessage('loginMessage', 'Enter your name.', 'error');
         return;
       }
+
       if (pass !== GLOBAL_TEACHER_PASSWORD) {
         setMessage('loginMessage', 'Incorrect password.', 'error');
         return;
       }
+
       setLoggedIn(name);
       setMessage('loginMessage', '', '');
       goRoute('dashboard');
@@ -547,61 +658,109 @@
         goRoute('login');
         return;
       }
+
       setMessage('dashboardMessage', 'Loading activities...', 'warning');
-      const result = await client.from('activities').select('id, title, created_at').order('created_at', { ascending: false });
+
+      const result = await client
+        .from('activities')
+        .select('id, title, created_at')
+        .order('created_at', { ascending: false });
+
       if (result.error) {
         setMessage('dashboardMessage', escapeHtml(result.error.message || 'Could not load activities.'), 'error');
         el('dashboardTable').classList.add('hidden');
         return;
       }
+
       const rows = result.data || [];
       const tbody = el('dashboardTable').querySelector('tbody');
       tbody.innerHTML = '';
+
       const base = window.location.origin + window.location.pathname;
+
       rows.forEach(function(row) {
         const tr = document.createElement('tr');
+
         const tdTitle = document.createElement('td');
         tdTitle.textContent = row.title;
+
         const tdCreated = document.createElement('td');
         tdCreated.textContent = new Date(row.created_at).toLocaleString();
+
         const tdLinks = document.createElement('td');
         const actions = document.createElement('div');
         actions.className = 'action-links';
+
         const resultsLink = buildInlineLink('Results', '#');
         resultsLink.addEventListener('click', function(evt) {
           evt.preventDefault();
           goRoute('results', row.id);
         });
+
         const studentLink = buildInlineLink('Student Link', base + '?view=play&id=' + row.id);
         studentLink.target = '_blank';
+
         actions.appendChild(resultsLink);
         actions.appendChild(studentLink);
         tdLinks.appendChild(actions);
+
         tr.appendChild(tdTitle);
         tr.appendChild(tdCreated);
         tr.appendChild(tdLinks);
+
         tbody.appendChild(tr);
       });
+
       el('dashboardTable').classList.remove('hidden');
-      setMessage('dashboardMessage', rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.', 'success');
+      setMessage(
+        'dashboardMessage',
+        rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.',
+        'success'
+      );
     }
 
     async function createActivity() {
       try {
         setMessage('createMessage', 'Saving activity...', 'warning');
+
         const teacherName = el('teacherName').value.trim();
         const title = el('activityTitle').value.trim();
         const pairsRaw = el('pairsInput').value;
+
         if (!teacherName) throw new Error('Enter your name.');
         if (!title) throw new Error('Enter an activity title.');
+
         const pairs = parsePairs(pairsRaw);
-        const result = await client.from('activities').insert([{ title: title, teacher_name: teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }]).select().single();
+
+        const result = await client
+          .from('activities')
+          .insert([
+            {
+              title: title,
+              teacher_name: teacherName,
+              teacher_password: GLOBAL_TEACHER_PASSWORD,
+              pairs: pairs
+            }
+          ])
+          .select()
+          .single();
+
         if (result.error) throw result.error;
+
         const activity = result.data;
         const base = window.location.origin + window.location.pathname;
         const studentLink = base + '?view=play&id=' + activity.id;
         const resultsLink = base + '?view=results&id=' + activity.id;
-        setMessage('createMessage', 'Activity created.<br><br><strong>Student Link:</strong><br><a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br><strong>Results Link:</strong><br><a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>', 'success');
+
+        setMessage(
+          'createMessage',
+          'Activity created.<br><br>' +
+            '<strong>Student Link:</strong><br>' +
+            '<a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br>' +
+            '<strong>Results Link:</strong><br>' +
+            '<a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>',
+          'success'
+        );
       } catch (err) {
         setMessage('createMessage', escapeHtml(err.message || 'Could not create activity.'), 'error');
       }
@@ -609,12 +768,19 @@
 
     async function loadActivityForPlay(id) {
       setMessage('studentGateMessage', 'Loading activity...', 'warning');
-      const result = await client.from('activities').select('id, title, pairs').eq('id', id).single();
+
+      const result = await client
+        .from('activities')
+        .select('id, title, pairs')
+        .eq('id', id)
+        .single();
+
       if (result.error || !result.data) {
         el('playTitle').textContent = 'Activity not found';
         setMessage('studentGateMessage', 'Could not load this activity.', 'error');
         return;
       }
+
       state.activity = result.data;
       state.activityId = result.data.id;
       el('playTitle').textContent = result.data.title;
@@ -632,8 +798,10 @@
       state.startTs = null;
       state.wrongFlashLeft = null;
       state.wrongFlashRight = null;
+
       if (state.timerInt) clearInterval(state.timerInt);
       state.timerInt = null;
+
       el('matchedCount').textContent = '0';
       el('attemptCount').textContent = '0';
       el('timer').textContent = '0';
@@ -642,28 +810,40 @@
 
     function startGame() {
       const studentName = el('studentName').value.trim();
+
       if (!studentName) {
         setMessage('studentGateMessage', 'Please enter your name.', 'error');
         return;
       }
+
       if (!state.activity || !state.activity.pairs) {
         setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
         return;
       }
+
       state.studentName = studentName;
       resetGameState();
+
       el('studentGate').classList.add('hidden');
       el('gameArea').classList.remove('hidden');
-      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return { id: 'L' + index, pairId: index, text: pair.left };
-      }));
-      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return { id: 'R' + index, pairId: index, text: pair.right };
-      }));
+
+      state.leftItems = shuffle(
+        state.activity.pairs.map(function(pair, index) {
+          return { id: 'L' + index, pairId: index, text: pair.left };
+        })
+      );
+
+      state.rightItems = shuffle(
+        state.activity.pairs.map(function(pair, index) {
+          return { id: 'R' + index, pairId: index, text: pair.right };
+        })
+      );
+
       state.startTs = Date.now();
       state.timerInt = setInterval(function() {
         el('timer').textContent = String(Math.floor((Date.now() - state.startTs) / 1000));
       }, 1000);
+
       renderGame();
     }
 
@@ -672,6 +852,7 @@
       const rightList = el('rightList');
       leftList.innerHTML = '';
       rightList.innerHTML = '';
+
       state.leftItems.forEach(function(item) {
         const btn = document.createElement('button');
         btn.className = 'match-btn';
@@ -684,6 +865,7 @@
         });
         leftList.appendChild(btn);
       });
+
       state.rightItems.forEach(function(item) {
         const btn = document.createElement('button');
         btn.className = 'match-btn';
@@ -696,6 +878,7 @@
         });
         rightList.appendChild(btn);
       });
+
       el('matchedCount').textContent = String(state.matchedLeft.size);
       el('attemptCount').textContent = String(state.attempts);
     }
@@ -724,9 +907,17 @@
 
     function maybeCheckMatch() {
       if (!state.selectedLeft || !state.selectedRight) return;
-      const left = state.leftItems.find(function(item) { return item.id === state.selectedLeft; });
-      const right = state.rightItems.find(function(item) { return item.id === state.selectedRight; });
+
+      const left = state.leftItems.find(function(item) {
+        return item.id === state.selectedLeft;
+      });
+
+      const right = state.rightItems.find(function(item) {
+        return item.id === state.selectedRight;
+      });
+
       state.attempts += 1;
+
       if (left.pairId === right.pairId) {
         state.matchedLeft.add(left.id);
         state.matchedRight.add(right.id);
@@ -741,26 +932,45 @@
         playTone('wrong');
         clearWrongFlashSoon();
       }
+
       state.selectedLeft = null;
       state.selectedRight = null;
       renderGame();
-      if (state.matchedLeft.size === state.leftItems.length) finishGame();
+
+      if (state.matchedLeft.size === state.leftItems.length) {
+        finishGame();
+      }
     }
 
     async function finishGame() {
       if (state.timerInt) clearInterval(state.timerInt);
+
       const duration = Math.floor((Date.now() - state.startTs) / 1000);
       const total = state.leftItems.length;
       const score = total;
+
       setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
-      const result = await client.from('submissions').insert([{ activity_id: state.activityId, student_name: state.studentName, score: score, total: total, attempts: state.attempts, duration_seconds: duration }]);
+
+      const result = await client.from('submissions').insert([
+        {
+          activity_id: state.activityId,
+          student_name: state.studentName,
+          score: score,
+          total: total,
+          attempts: state.attempts,
+          duration_seconds: duration
+        }
+      ]);
+
       if (result.error) {
         setMessage('gameMessage', 'You finished, but the result could not be saved.', 'error');
         return;
       }
+
       setMessage('gameMessage', 'Done. Your result was saved.', 'success');
       el('finishScore').textContent = score + '/' + total;
-      el('finishDetails').innerHTML = 'Attempts: <strong>' + state.attempts + '</strong> | Time: <strong>' + duration + 's</strong>';
+      el('finishDetails').innerHTML =
+        'Attempts: <strong>' + state.attempts + '</strong> | Time: <strong>' + duration + 's</strong>';
       el('finishOverlay').classList.remove('hidden');
     }
 
@@ -779,26 +989,55 @@
     async function loadResults() {
       try {
         setMessage('resultsMessage', 'Loading results...', 'warning');
+
         if (!state.activityId) throw new Error('Missing activity id.');
-        const activityResult = await client.from('activities').select('id, title, created_at').eq('id', state.activityId).single();
-        if (activityResult.error || !activityResult.data) throw new Error('Could not load activity.');
-        const rowsResult = await client.from('submissions').select('student_name, score, total, attempts, duration_seconds, created_at').eq('activity_id', state.activityId).order('created_at', { ascending: false });
+
+        const activityResult = await client
+          .from('activities')
+          .select('id, title, created_at')
+          .eq('id', state.activityId)
+          .single();
+
+        if (activityResult.error || !activityResult.data) {
+          throw new Error('Could not load activity.');
+        }
+
+        const rowsResult = await client
+          .from('submissions')
+          .select('student_name, score, total, attempts, duration_seconds, created_at')
+          .eq('activity_id', state.activityId)
+          .order('created_at', { ascending: false });
+
         if (rowsResult.error) throw rowsResult.error;
+
         state.resultsRows = rowsResult.data || [];
         el('resultsTitle').textContent = 'Results: ' + activityResult.data.title;
-        el('resultsMeta').textContent = 'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
+        el('resultsMeta').textContent =
+          'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
+
         const tbody = el('resultsTable').querySelector('tbody');
         tbody.innerHTML = '';
+
         state.resultsRows.forEach(function(row) {
           const tr = document.createElement('tr');
-          const values = [row.student_name, row.score, row.total, row.attempts, row.duration_seconds, new Date(row.created_at).toLocaleString()];
+          const values = [
+            row.student_name,
+            row.score,
+            row.total,
+            row.attempts,
+            row.duration_seconds,
+            new Date(row.created_at).toLocaleString()
+          ];
+
           values.forEach(function(value) {
             const td = document.createElement('td');
             td.textContent = String(value);
             tr.appendChild(td);
           });
+
           tbody.appendChild(tr);
         });
+
         el('resultsTable').classList.remove('hidden');
         setMessage('resultsMessage', state.resultsRows.length + ' submission(s) loaded.', 'success');
       } catch (err) {
@@ -812,12 +1051,21 @@
         setMessage('resultsMessage', 'No results loaded yet.', 'error');
         return;
       }
+
       const lines = [['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(',')];
+
       state.resultsRows.forEach(function(row) {
-        lines.push([csvSafe(row.student_name), row.score, row.total, row.attempts, row.duration_seconds, csvSafe(new Date(row.created_at).toLocaleString())].join(','));
+        lines.push([
+          csvSafe(row.student_name),
+          row.score,
+          row.total,
+          row.attempts,
+          row.duration_seconds,
+          csvSafe(new Date(row.created_at).toLocaleString())
+        ].join(','));
       });
-      const blob = new Blob([lines.join('
-')], { type: 'text/csv;charset=utf-8;' });
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -828,8 +1076,7 @@
 
     function csvSafe(value) {
       const text = String(value || '');
-      if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('
-') !== -1) {
+      if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('\n') !== -1) {
         return '"' + text.replaceAll('"', '""') + '"';
       }
       return text;
@@ -853,8 +1100,10 @@
       const routeInfo = slugRoute();
       const view = routeInfo.view;
       const id = routeInfo.id;
+
       state.activityId = id || null;
       renderNav();
+
       if (view === 'play' && id) {
         showOnly('playView');
         closeFinishOverlay();
@@ -865,15 +1114,18 @@
         await loadActivityForPlay(id);
         return;
       }
+
       if (!isLoggedIn()) {
         showOnly('loginView');
         return;
       }
+
       if (view === 'create') {
         showOnly('createView');
         el('teacherName').value = sessionStorage.getItem('teacherName') || '';
         return;
       }
+
       if (view === 'results' && id) {
         showOnly('resultsView');
         el('resultsTitle').textContent = 'Results';
@@ -883,6 +1135,7 @@
         await loadResults();
         return;
       }
+
       showOnly('dashboardView');
       await loadDashboard();
     }
