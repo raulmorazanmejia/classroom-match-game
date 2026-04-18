@@ -23,7 +23,6 @@
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
@@ -447,7 +446,7 @@
   <script>
     const SUPABASE_URL = "https://cpouyxzsnmoiskxhrcut.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra";
-    const GLOBAL_TEACHER_PASSWORD = "intel123";
+    const GLOBAL_TEACHER_PASSWORD = "teach1234";
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -490,7 +489,7 @@
 
     function shuffle(arr) {
       const copy = arr.slice();
-      for (let i = copy.length - 1; i > 0; i -= 1) {
+      for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         const temp = copy[i];
         copy[i] = copy[j];
@@ -519,15 +518,15 @@
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
       } catch (e) {
-        // silent fallback
       }
     }
 
     function slugRoute() {
       const url = new URL(window.location.href);
-      const view = url.searchParams.get('view') || 'home';
-      const id = url.searchParams.get('id');
-      return { view: view, id: id };
+      return {
+        view: url.searchParams.get('view') || 'home',
+        id: url.searchParams.get('id')
+      };
     }
 
     function goRoute(view, id) {
@@ -544,22 +543,15 @@
 
     window.addEventListener('popstate', initRoute);
 
-    function renderNav(view, id) {
-      const nav = el('nav');
-      let html = '<a href="#" onclick="goRoute(\'home\'); return false;">Home</a>';
-      html += '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>';
-      if (view === 'play' && id) {
-        html += '<a href="#" onclick="goRoute(\'play\', \'" + id + "\'); return false;">Student Activity</a>';
-      }
-      if (view === 'results' && id) {
-        html += '<a href="#" onclick="goRoute(\'results\', \'" + id + "\'); return false;">Results</a>';
-      }
-      nav.innerHTML = html;
+    function renderNav() {
+      el('nav').innerHTML = [
+        '<a href="#" onclick="goRoute(\'home\'); return false;">Home</a>',
+        '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>'
+      ].join('');
     }
 
     function showOnly(idToShow) {
-      const ids = ['homeView', 'createView', 'playView', 'resultsView'];
-      ids.forEach(function(sectionId) {
+      ['homeView', 'createView', 'playView', 'resultsView'].forEach(function(sectionId) {
         el(sectionId).classList.add('hidden');
       });
       el(idToShow).classList.remove('hidden');
@@ -574,21 +566,19 @@
         'repaired, is being repaired now',
         'painted, was painted by students',
         'broken, was broken by the wind'
-      ].join('
-');
+      ].join('\n');
     }
 
     function parsePairs(text) {
       const lines = text
-        .split(/
-?
-/)
+        .split(/\r?\n/)
         .map(function(line) { return line.trim(); })
         .filter(Boolean);
 
       const parsed = [];
 
-      for (const line of lines) {
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         let separator = null;
         if (line.includes('|')) {
           separator = '|';
@@ -619,33 +609,27 @@
     async function createActivity() {
       try {
         setMessage('createMessage', 'Saving activity...', 'warning');
-        const teacher_name = el('teacherName').value.trim();
+        const teacherName = el('teacherName').value.trim();
         const title = el('activityTitle').value.trim();
         const pairsRaw = el('pairsInput').value;
 
-        if (!teacher_name) {
-          throw new Error('Enter your name.');
-        }
-        if (!title) {
-          throw new Error('Enter an activity title.');
-        }
+        if (!teacherName) throw new Error('Enter your name.');
+        if (!title) throw new Error('Enter an activity title.');
 
         const pairs = parsePairs(pairsRaw);
 
         const result = await client
           .from('activities')
-          .insert([{ title: title, teacher_name: teacher_name, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }])
+          .insert([{ title: title, teacher_name: teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }])
           .select()
           .single();
 
-        if (result.error) {
-          throw result.error;
-        }
+        if (result.error) throw result.error;
 
-        const data = result.data;
+        const activity = result.data;
         const base = window.location.origin + window.location.pathname;
-        const studentLink = base + '?view=play&id=' + data.id;
-        const resultsLink = base + '?view=results&id=' + data.id;
+        const studentLink = base + '?view=play&id=' + activity.id;
+        const resultsLink = base + '?view=results&id=' + activity.id;
 
         setMessage(
           'createMessage',
@@ -693,9 +677,7 @@
       state.wrongFlashLeft = null;
       state.wrongFlashRight = null;
 
-      if (state.timerInt) {
-        clearInterval(state.timerInt);
-      }
+      if (state.timerInt) clearInterval(state.timerInt);
       state.timerInt = null;
 
       el('matchedCount').textContent = '0';
@@ -706,12 +688,10 @@
 
     function startGame() {
       const studentName = el('studentName').value.trim();
-
       if (!studentName) {
         setMessage('studentGateMessage', 'Please enter your name.', 'error');
         return;
       }
-
       if (!state.activity || !state.activity.pairs) {
         setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
         return;
@@ -723,19 +703,11 @@
       el('gameArea').classList.remove('hidden');
 
       state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return {
-          id: 'L' + index,
-          pairId: index,
-          text: pair.left
-        };
+        return { id: 'L' + index, pairId: index, text: pair.left };
       }));
 
       state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) {
-        return {
-          id: 'R' + index,
-          pairId: index,
-          text: pair.right
-        };
+        return { id: 'R' + index, pairId: index, text: pair.right };
       }));
 
       state.startTs = Date.now();
@@ -749,17 +721,19 @@
 
     function renderGame() {
       const leftHtml = state.leftItems.map(function(item) {
-        const selected = state.selectedLeft === item.id ? 'selected' : '';
-        const correct = state.matchedLeft.has(item.id) ? 'correct' : '';
-        const wrong = state.wrongFlashLeft === item.id ? 'wrong' : '';
-        return '<button class="match-btn ' + selected + ' ' + correct + ' ' + wrong + '" onclick="selectLeft(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
+        const classes = ['match-btn'];
+        if (state.selectedLeft === item.id) classes.push('selected');
+        if (state.matchedLeft.has(item.id)) classes.push('correct');
+        if (state.wrongFlashLeft === item.id) classes.push('wrong');
+        return '<button class="' + classes.join(' ') + '" onclick="selectLeft(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
       const rightHtml = state.rightItems.map(function(item) {
-        const selected = state.selectedRight === item.id ? 'selected' : '';
-        const correct = state.matchedRight.has(item.id) ? 'correct' : '';
-        const wrong = state.wrongFlashRight === item.id ? 'wrong' : '';
-        return '<button class="match-btn ' + selected + ' ' + correct + ' ' + wrong + '" onclick="selectRight(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
+        const classes = ['match-btn'];
+        if (state.selectedRight === item.id) classes.push('selected');
+        if (state.matchedRight.has(item.id)) classes.push('correct');
+        if (state.wrongFlashRight === item.id) classes.push('wrong');
+        return '<button class="' + classes.join(' ') + '" onclick="selectRight(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
       el('leftList').innerHTML = leftHtml;
@@ -793,8 +767,8 @@
     function maybeCheckMatch() {
       if (!state.selectedLeft || !state.selectedRight) return;
 
-      const left = state.leftItems.find(function(x) { return x.id === state.selectedLeft; });
-      const right = state.rightItems.find(function(x) { return x.id === state.selectedRight; });
+      const left = state.leftItems.find(function(item) { return item.id === state.selectedLeft; });
+      const right = state.rightItems.find(function(item) { return item.id === state.selectedRight; });
       state.attempts += 1;
 
       if (left.pairId === right.pairId) {
@@ -816,15 +790,11 @@
       state.selectedRight = null;
       renderGame();
 
-      if (state.matchedLeft.size === state.leftItems.length) {
-        finishGame();
-      }
+      if (state.matchedLeft.size === state.leftItems.length) finishGame();
     }
 
     async function finishGame() {
-      if (state.timerInt) {
-        clearInterval(state.timerInt);
-      }
+      if (state.timerInt) clearInterval(state.timerInt);
 
       const duration = Math.floor((Date.now() - state.startTs) / 1000);
       const total = state.leftItems.length;
@@ -869,15 +839,9 @@
         setMessage('resultsMessage', 'Loading results...', 'warning');
         const pass = el('resultsPass').value.trim();
 
-        if (!pass) {
-          throw new Error('Enter the teacher password.');
-        }
-        if (pass !== GLOBAL_TEACHER_PASSWORD) {
-          throw new Error('Incorrect teacher password.');
-        }
-        if (!state.activityId) {
-          throw new Error('Missing activity id.');
-        }
+        if (!pass) throw new Error('Enter the teacher password.');
+        if (pass !== GLOBAL_TEACHER_PASSWORD) throw new Error('Incorrect teacher password.');
+        if (!state.activityId) throw new Error('Missing activity id.');
 
         const activityResult = await client
           .from('activities')
@@ -885,9 +849,7 @@
           .eq('id', state.activityId)
           .single();
 
-        if (activityResult.error || !activityResult.data) {
-          throw new Error('Could not load activity.');
-        }
+        if (activityResult.error || !activityResult.data) throw new Error('Could not load activity.');
 
         const rowsResult = await client
           .from('submissions')
@@ -895,9 +857,7 @@
           .eq('activity_id', state.activityId)
           .order('created_at', { ascending: false });
 
-        if (rowsResult.error) {
-          throw rowsResult.error;
-        }
+        if (rowsResult.error) throw rowsResult.error;
 
         state.resultsRows = rowsResult.data || [];
         el('resultsTitle').textContent = 'Results: ' + activityResult.data.title;
@@ -943,8 +903,7 @@
         })
       ];
 
-      const blob = new Blob([lines.join('
-')], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -955,8 +914,7 @@
 
     function csvSafe(value) {
       const text = String(value || '');
-      if (text.includes(',') || text.includes('"') || text.includes('
-')) {
+      if (text.includes(',') || text.includes('"') || text.includes('\n')) {
         return '"' + text.replaceAll('"', '""') + '"';
       }
       return text;
@@ -968,7 +926,7 @@
       const id = routeInfo.id;
       state.route = view;
       state.activityId = id || null;
-      renderNav(view, id);
+      renderNav();
 
       if (view === 'create') {
         showOnly('createView');
