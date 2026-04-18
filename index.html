@@ -30,11 +30,7 @@
       background: radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
     }
 
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 18px 40px;
-    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 24px 18px 40px; }
 
     .card {
       background: var(--card);
@@ -55,11 +51,7 @@
     .row { display: flex; gap: 14px; flex-wrap: wrap; }
     .col { flex: 1 1 320px; }
 
-    label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
+    label { display: block; font-weight: 700; margin-bottom: 6px; }
 
     input, textarea {
       width: 100%;
@@ -70,11 +62,7 @@
       background: white;
     }
 
-    textarea {
-      min-height: 230px;
-      resize: vertical;
-      font-family: Consolas, monospace;
-    }
+    textarea { min-height: 230px; resize: vertical; font-family: Consolas, monospace; }
 
     button {
       border: none;
@@ -89,17 +77,8 @@
       box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
     }
 
-    button:hover {
-      background: var(--accent-2);
-      transform: translateY(-1px);
-    }
-
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-      box-shadow: none;
-    }
-
+    button:hover { background: var(--accent-2); transform: translateY(-1px); }
+    button.secondary { background: #e5e7eb; color: #111827; box-shadow: none; }
     button.secondary:hover { background: #d1d5db; }
 
     .pill {
@@ -120,32 +99,13 @@
       margin-top: 12px;
     }
 
-    .error {
-      border-left-color: var(--bad);
-      background: #fef2f2;
-      color: #7f1d1d;
-    }
+    .error { border-left-color: var(--bad); background: #fef2f2; color: #7f1d1d; }
+    .success { border-left-color: var(--good); background: #ecfdf5; color: #065f46; }
+    .warning { border-left-color: var(--warn); background: #fffbeb; color: #78350f; }
 
-    .success {
-      border-left-color: var(--good);
-      background: #ecfdf5;
-      color: #065f46;
-    }
+    .topnav { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
 
-    .warning {
-      border-left-color: var(--warn);
-      background: #fffbeb;
-      color: #78350f;
-    }
-
-    .topnav {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .topnav a, .inline-link {
+    .nav-link, .inline-link {
       text-decoration: none;
       background: white;
       padding: 11px 16px;
@@ -156,21 +116,10 @@
       display: inline-block;
     }
 
-    .hero {
-      background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%);
-    }
+    .hero { background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%); }
 
-    .game-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .option-list {
-      display: grid;
-      gap: 12px;
-    }
+    .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+    .option-list { display: grid; gap: 12px; }
 
     .match-btn {
       width: 100%;
@@ -186,44 +135,13 @@
       transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
     }
 
-    .match-btn:hover {
-      background: #f8faff;
-      transform: scale(1.02);
-    }
+    .match-btn:hover { background: #f8faff; transform: scale(1.02); }
+    .match-btn.selected { border-color: var(--accent); background: #ddd6fe; }
+    .match-btn.correct { border-color: #10b981; background: #d1fae5; color: #065f46; cursor: default; transform: none; }
+    .match-btn.wrong { border-color: #f87171; background: #fee2e2; color: #991b1b; }
 
-    .match-btn.selected {
-      border-color: var(--accent);
-      background: #ddd6fe;
-    }
-
-    .match-btn.correct {
-      border-color: #10b981;
-      background: #d1fae5;
-      color: #065f46;
-      cursor: default;
-      transform: none;
-    }
-
-    .match-btn.wrong {
-      border-color: #f87171;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .stats {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 14px 0;
-    }
-
-    .stat {
-      background: white;
-      border-radius: 14px;
-      padding: 10px 12px;
-      box-shadow: var(--shadow);
-      font-weight: 700;
-    }
+    .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+    .stat { background: white; border-radius: 14px; padding: 10px 12px; box-shadow: var(--shadow); font-weight: 700; }
 
     .tool-tag {
       display: inline-flex;
@@ -254,12 +172,7 @@
     }
 
     th { background: #f9fafb; }
-
-    code.inline {
-      background: #f3f4f6;
-      padding: 2px 6px;
-      border-radius: 6px;
-    }
+    code.inline { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
 
     .overlay {
       position: fixed;
@@ -281,23 +194,9 @@
       text-align: center;
     }
 
-    .modal h2 {
-      font-size: 2rem;
-      margin-bottom: 8px;
-    }
-
-    .modal-score {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--accent-2);
-      margin: 10px 0 16px;
-    }
-
-    .action-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
+    .modal h2 { font-size: 2rem; margin-bottom: 8px; }
+    .modal-score { font-size: 2.2rem; font-weight: 800; color: var(--accent-2); margin: 10px 0 16px; }
+    .action-links { display: flex; gap: 10px; flex-wrap: wrap; }
 
     @media (max-width: 720px) {
       .wrap { padding: 14px; }
@@ -305,7 +204,7 @@
       h1 { font-size: 1.6rem; }
       .card { padding: 16px; }
       button, input, textarea { font-size: 16px; }
-      .topnav a, .inline-link { padding: 10px 14px; }
+      .nav-link, .inline-link { padding: 10px 14px; }
     }
   </style>
 </head>
@@ -358,7 +257,6 @@
       <div class="card">
         <h1>Create Match Activity</h1>
         <p class="muted">Format each line like this: <code class="inline">left item, right item</code> or <code class="inline">left item | right item</code></p>
-
         <div class="row">
           <div class="col">
             <label for="teacherName">Teacher/Admin Name</label>
@@ -369,23 +267,19 @@
             <input id="activityTitle" placeholder="Passive Voice Match Practice" />
           </div>
         </div>
-
         <label for="pairsInput">Pairs</label>
         <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
-
         <div style="margin-top:14px;">
           <span class="tool-tag">Mobile-friendly</span>
           <span class="tool-tag">Tap-to-match</span>
           <span class="tool-tag">Stores student results</span>
           <span class="tool-tag">One global teacher password</span>
         </div>
-
         <div class="row" style="margin-top:14px;">
           <button id="generateLinksBtn">Generate Links</button>
           <button class="secondary" id="loadDemoBtn">Load Demo</button>
           <button class="secondary" id="backToDashboardBtn">Back to Dashboard</button>
         </div>
-
         <div id="createMessage"></div>
       </div>
     </section>
@@ -395,7 +289,6 @@
         <div class="pill">Student Activity</div>
         <h1 id="playTitle">Match Activity</h1>
         <p class="muted" id="playInstructions">Match the items. When you finish, your result will be saved automatically.</p>
-
         <div id="studentGate">
           <label for="studentName">Your Name</label>
           <input id="studentName" placeholder="Enter your name" />
@@ -404,7 +297,6 @@
           </div>
           <div id="studentGateMessage"></div>
         </div>
-
         <div id="gameArea" class="hidden">
           <div class="stats">
             <div class="stat">Matched: <span id="matchedCount">0</span></div>
@@ -586,43 +478,41 @@
 
     window.addEventListener('popstate', initRoute);
 
+    function createNavLink(text, handler) {
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = text;
+      a.className = 'nav-link';
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        handler();
+      });
+      return a;
+    }
+
     function renderNav() {
-      const loggedIn = isLoggedIn();
-      const routeInfo = slugRoute();
-      const view = routeInfo.view;
+      const nav = el('nav');
+      nav.innerHTML = '';
+      const view = slugRoute().view;
 
-      if (view === 'play') {
-        el('nav').innerHTML = '';
-        return;
-      }
+      if (view === 'play') return;
 
-      if (!loggedIn) {
-        el('nav').innerHTML = '<a href="#" id="navLoginLink">Login</a>';
-        el('nav').querySelector('#navLoginLink').addEventListener('click', function(e) {
-          e.preventDefault();
+      if (!isLoggedIn()) {
+        nav.appendChild(createNavLink('Login', function() {
           goRoute('login');
-        });
+        }));
         return;
       }
 
-      el('nav').innerHTML = [
-        '<a href="#" id="navDashboardLink">Dashboard</a>',
-        '<a href="#" id="navCreateLink">Create</a>',
-        '<a href="#" id="navLogoutLink">Log Out</a>'
-      ].join('');
-
-      el('nav').querySelector('#navDashboardLink').addEventListener('click', function(e) {
-        e.preventDefault();
+      nav.appendChild(createNavLink('Dashboard', function() {
         goRoute('dashboard');
-      });
-      el('nav').querySelector('#navCreateLink').addEventListener('click', function(e) {
-        e.preventDefault();
+      }));
+      nav.appendChild(createNavLink('Create', function() {
         goRoute('create');
-      });
-      el('nav').querySelector('#navLogoutLink').addEventListener('click', function(e) {
-        e.preventDefault();
+      }));
+      nav.appendChild(createNavLink('Log Out', function() {
         logout();
-      });
+      }));
     }
 
     function showOnly(idToShow) {
@@ -692,6 +582,14 @@
       goRoute('dashboard');
     }
 
+    function buildInlineLink(text, href) {
+      const a = document.createElement('a');
+      a.textContent = text;
+      a.href = href || '#';
+      a.className = 'inline-link';
+      return a;
+    }
+
     async function loadDashboard() {
       if (!isLoggedIn()) {
         goRoute('login');
@@ -712,30 +610,39 @@
 
       const rows = result.data || [];
       const tbody = el('dashboardTable').querySelector('tbody');
+      tbody.innerHTML = '';
       const base = window.location.origin + window.location.pathname;
-      let html = '';
 
-      for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const studentLink = base + '?view=play&id=' + row.id;
-        html += '<tr>' +
-          '<td>' + escapeHtml(row.title) + '</td>' +
-          '<td>' + new Date(row.created_at).toLocaleString() + '</td>' +
-          '<td>' +
-            '<div class="action-links">' +
-              '<a href="#" class="inline-link results-open" data-id="' + row.id + '">Results</a>' +
-              '<a href="' + studentLink + '" target="_blank" class="inline-link">Student Link</a>' +
-            '</div>' +
-          '</td>' +
-        '</tr>';
-      }
+      rows.forEach(function(row) {
+        const tr = document.createElement('tr');
 
-      tbody.innerHTML = html;
-      Array.from(tbody.querySelectorAll('.results-open')).forEach(function(link) {
-        link.addEventListener('click', function(e) {
+        const tdTitle = document.createElement('td');
+        tdTitle.textContent = row.title;
+
+        const tdCreated = document.createElement('td');
+        tdCreated.textContent = new Date(row.created_at).toLocaleString();
+
+        const tdLinks = document.createElement('td');
+        const actions = document.createElement('div');
+        actions.className = 'action-links';
+
+        const resultsLink = buildInlineLink('Results', '#');
+        resultsLink.addEventListener('click', function(e) {
           e.preventDefault();
-          goRoute('results', link.dataset.id);
+          goRoute('results', row.id);
         });
+
+        const studentLink = buildInlineLink('Student Link', base + '?view=play&id=' + row.id);
+        studentLink.target = '_blank';
+
+        actions.appendChild(resultsLink);
+        actions.appendChild(studentLink);
+        tdLinks.appendChild(actions);
+
+        tr.appendChild(tdTitle);
+        tr.appendChild(tdCreated);
+        tr.appendChild(tdLinks);
+        tbody.appendChild(tr);
       });
 
       el('dashboardTable').classList.remove('hidden');
@@ -854,38 +761,39 @@
     }
 
     function renderGame() {
-      const leftHtml = state.leftItems.map(function(item) {
-        const classes = ['match-btn'];
-        if (state.selectedLeft === item.id) classes.push('selected');
-        if (state.matchedLeft.has(item.id)) classes.push('correct');
-        if (state.wrongFlashLeft === item.id) classes.push('wrong');
-        return '<button class="' + classes.join(' ') + '" data-left-id="' + item.id + '">' + escapeHtml(item.text) + '</button>';
-      }).join('');
+      const leftList = el('leftList');
+      const rightList = el('rightList');
+      leftList.innerHTML = '';
+      rightList.innerHTML = '';
 
-      const rightHtml = state.rightItems.map(function(item) {
-        const classes = ['match-btn'];
-        if (state.selectedRight === item.id) classes.push('selected');
-        if (state.matchedRight.has(item.id)) classes.push('correct');
-        if (state.wrongFlashRight === item.id) classes.push('wrong');
-        return '<button class="' + classes.join(' ') + '" data-right-id="' + item.id + '">' + escapeHtml(item.text) + '</button>';
-      }).join('');
+      state.leftItems.forEach(function(item) {
+        const btn = document.createElement('button');
+        btn.className = 'match-btn';
+        if (state.selectedLeft === item.id) btn.classList.add('selected');
+        if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
+        if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
+        btn.textContent = item.text;
+        btn.addEventListener('click', function() {
+          selectLeft(item.id);
+        });
+        leftList.appendChild(btn);
+      });
 
-      el('leftList').innerHTML = leftHtml;
-      el('rightList').innerHTML = rightHtml;
+      state.rightItems.forEach(function(item) {
+        const btn = document.createElement('button');
+        btn.className = 'match-btn';
+        if (state.selectedRight === item.id) btn.classList.add('selected');
+        if (state.matchedRight.has(item.id)) btn.classList.add('correct');
+        if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
+        btn.textContent = item.text;
+        btn.addEventListener('click', function() {
+          selectRight(item.id);
+        });
+        rightList.appendChild(btn);
+      });
+
       el('matchedCount').textContent = String(state.matchedLeft.size);
       el('attemptCount').textContent = String(state.attempts);
-
-      Array.from(el('leftList').querySelectorAll('[data-left-id]')).forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          selectLeft(btn.dataset.leftId);
-        });
-      });
-
-      Array.from(el('rightList').querySelectorAll('[data-right-id]')).forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          selectRight(btn.dataset.rightId);
-        });
-      });
     }
 
     function selectLeft(id) {
@@ -1004,16 +912,19 @@
         el('resultsMeta').textContent = 'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
 
         const tbody = el('resultsTable').querySelector('tbody');
-        tbody.innerHTML = state.resultsRows.map(function(row) {
-          return '<tr>' +
-            '<td>' + escapeHtml(row.student_name) + '</td>' +
-            '<td>' + row.score + '</td>' +
-            '<td>' + row.total + '</td>' +
-            '<td>' + row.attempts + '</td>' +
-            '<td>' + row.duration_seconds + '</td>' +
-            '<td>' + new Date(row.created_at).toLocaleString() + '</td>' +
-          '</tr>';
-        }).join('');
+        tbody.innerHTML = '';
+        state.resultsRows.forEach(function(row) {
+          const tr = document.createElement('tr');
+          ['student_name', 'score', 'total', 'attempts', 'duration_seconds'].forEach(function(key) {
+            const td = document.createElement('td');
+            td.textContent = String(row[key]);
+            tr.appendChild(td);
+          });
+          const completedTd = document.createElement('td');
+          completedTd.textContent = new Date(row.created_at).toLocaleString();
+          tr.appendChild(completedTd);
+          tbody.appendChild(tr);
+        });
 
         el('resultsTable').classList.remove('hidden');
         setMessage('resultsMessage', state.resultsRows.length + ' submission(s) loaded.', 'success');
