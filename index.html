@@ -41,16 +41,14 @@
     }
 
     h1, h2, h3 { margin-top: 0; }
-    h1 { font-size: 2.1rem; margin-bottom: 10px; }
+    h1 { font-size: 2rem; margin-bottom: 10px; }
     h2 { font-size: 1.35rem; }
-    h3 { font-size: 1.05rem; }
     p { line-height: 1.5; }
 
     .muted { color: var(--muted); }
     .hidden { display: none !important; }
     .row { display: flex; gap: 14px; flex-wrap: wrap; }
     .col { flex: 1 1 320px; }
-
     label { display: block; font-weight: 700; margin-bottom: 6px; }
 
     input, textarea {
@@ -62,7 +60,7 @@
       background: white;
     }
 
-    textarea { min-height: 230px; resize: vertical; font-family: Consolas, monospace; }
+    textarea { min-height: 240px; resize: vertical; font-family: Consolas, monospace; }
 
     button {
       border: none;
@@ -73,7 +71,6 @@
       cursor: pointer;
       background: var(--accent);
       color: white;
-      transition: transform 0.12s ease, background 0.12s ease, box-shadow 0.12s ease;
       box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
     }
 
@@ -116,8 +113,6 @@
       display: inline-block;
     }
 
-    .hero { background: linear-gradient(135deg, #ffffff 0%, #eef2ff 100%); }
-
     .game-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
     .option-list { display: grid; gap: 12px; }
 
@@ -135,9 +130,9 @@
       transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
     }
 
-    .match-btn:hover { background: #f8faff; transform: scale(1.02); }
+    .match-btn:hover { background: #f8faff; transform: scale(1.01); }
     .match-btn.selected { border-color: var(--accent); background: #ddd6fe; }
-    .match-btn.correct { border-color: #10b981; background: #d1fae5; color: #065f46; cursor: default; transform: none; }
+    .match-btn.correct { border-color: #10b981; background: #d1fae5; color: #065f46; cursor: default; }
     .match-btn.wrong { border-color: #f87171; background: #fee2e2; color: #991b1b; }
 
     .stats { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
@@ -172,7 +167,8 @@
     }
 
     th { background: #f9fafb; }
-    code.inline { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; }
+
+    .action-links { display: flex; gap: 10px; flex-wrap: wrap; }
 
     .overlay {
       position: fixed;
@@ -194,9 +190,7 @@
       text-align: center;
     }
 
-    .modal h2 { font-size: 2rem; margin-bottom: 8px; }
     .modal-score { font-size: 2.2rem; font-weight: 800; color: var(--accent-2); margin: 10px 0 16px; }
-    .action-links { display: flex; gap: 10px; flex-wrap: wrap; }
 
     @media (max-width: 720px) {
       .wrap { padding: 14px; }
@@ -204,7 +198,6 @@
       h1 { font-size: 1.6rem; }
       .card { padding: 16px; }
       button, input, textarea { font-size: 16px; }
-      .nav-link, .inline-link { padding: 10px 14px; }
     }
   </style>
 </head>
@@ -225,9 +218,7 @@
           <input id="loginPassword" type="password" placeholder="Teacher password">
         </div>
       </div>
-      <div class="row" style="margin-top:14px">
-        <button id="loginBtn">Log In</button>
-      </div>
+      <div class="row" style="margin-top:14px"><button id="loginBtn">Log In</button></div>
       <div id="loginMessage"></div>
     </section>
 
@@ -360,10 +351,23 @@
       wrongFlashRight: null
     };
 
-    function el(id) { return document.getElementById(id); }
-    function isLoggedIn() { return sessionStorage.getItem('teacherLoggedIn') === '1'; }
-    function setLoggedIn(name) { sessionStorage.setItem('teacherLoggedIn', '1'); sessionStorage.setItem('teacherName', name || 'Teacher'); }
-    function clearLogin() { sessionStorage.removeItem('teacherLoggedIn'); sessionStorage.removeItem('teacherName'); }
+    function el(id) {
+      return document.getElementById(id);
+    }
+
+    function isLoggedIn() {
+      return sessionStorage.getItem('teacherLoggedIn') === '1';
+    }
+
+    function setLoggedIn(name) {
+      sessionStorage.setItem('teacherLoggedIn', '1');
+      sessionStorage.setItem('teacherName', name || 'Teacher');
+    }
+
+    function clearLogin() {
+      sessionStorage.removeItem('teacherLoggedIn');
+      sessionStorage.removeItem('teacherName');
+    }
 
     function escapeHtml(str) {
       return String(str)
@@ -383,9 +387,9 @@
       const copy = arr.slice();
       for (let i = copy.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        const temp = copy[i];
+        const tmp = copy[i];
         copy[i] = copy[j];
-        copy[j] = temp;
+        copy[j] = tmp;
       }
       return copy;
     }
@@ -411,18 +415,29 @@
 
     function slugRoute() {
       const url = new URL(window.location.href);
-      return { view: url.searchParams.get('view') || '', id: url.searchParams.get('id') };
+      return {
+        view: url.searchParams.get('view') || '',
+        id: url.searchParams.get('id')
+      };
     }
 
     function goRoute(view, id) {
       const url = new URL(window.location.href);
       url.searchParams.set('view', view);
-      if (id) url.searchParams.set('id', id); else url.searchParams.delete('id');
+      if (id) {
+        url.searchParams.set('id', id);
+      } else {
+        url.searchParams.delete('id');
+      }
       history.pushState({}, '', url);
       initRoute();
     }
 
-    function logout() { clearLogin(); goRoute('login'); }
+    function logout() {
+      clearLogin();
+      goRoute('login');
+    }
+
     window.addEventListener('popstate', initRoute);
 
     function createNavLink(text, handler) {
@@ -430,7 +445,10 @@
       a.href = '#';
       a.textContent = text;
       a.className = 'nav-link';
-      a.addEventListener('click', function(e) { e.preventDefault(); handler(); });
+      a.addEventListener('click', function(evt) {
+        evt.preventDefault();
+        handler();
+      });
       return a;
     }
 
@@ -440,12 +458,20 @@
       const view = slugRoute().view;
       if (view === 'play') return;
       if (!isLoggedIn()) {
-        nav.appendChild(createNavLink('Login', function() { goRoute('login'); }));
+        nav.appendChild(createNavLink('Login', function() {
+          goRoute('login');
+        }));
         return;
       }
-      nav.appendChild(createNavLink('Dashboard', function() { goRoute('dashboard'); }));
-      nav.appendChild(createNavLink('Create', function() { goRoute('create'); }));
-      nav.appendChild(createNavLink('Log Out', logout));
+      nav.appendChild(createNavLink('Dashboard', function() {
+        goRoute('dashboard');
+      }));
+      nav.appendChild(createNavLink('Create', function() {
+        goRoute('create');
+      }));
+      nav.appendChild(createNavLink('Log Out', function() {
+        logout();
+      }));
     }
 
     function showOnly(idToShow) {
@@ -472,13 +498,15 @@
     function parsePairs(text) {
       const lines = text.split(/
 ?
-/).map(function(line) { return line.trim(); }).filter(Boolean);
+/).map(function(line) {
+        return line.trim();
+      }).filter(Boolean);
       const parsed = [];
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         let separator = null;
-        if (line.includes('|')) separator = '|';
-        else if (line.includes(',')) separator = ',';
+        if (line.indexOf('|') !== -1) separator = '|';
+        else if (line.indexOf(',') !== -1) separator = ',';
         else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
         const parts = line.split(separator);
         const left = (parts[0] || '').trim();
@@ -493,8 +521,14 @@
     function handleLogin() {
       const name = el('loginName').value.trim();
       const pass = el('loginPassword').value.trim();
-      if (!name) { setMessage('loginMessage', 'Enter your name.', 'error'); return; }
-      if (pass !== GLOBAL_TEACHER_PASSWORD) { setMessage('loginMessage', 'Incorrect password.', 'error'); return; }
+      if (!name) {
+        setMessage('loginMessage', 'Enter your name.', 'error');
+        return;
+      }
+      if (pass !== GLOBAL_TEACHER_PASSWORD) {
+        setMessage('loginMessage', 'Incorrect password.', 'error');
+        return;
+      }
       setLoggedIn(name);
       setMessage('loginMessage', '', '');
       goRoute('dashboard');
@@ -509,7 +543,10 @@
     }
 
     async function loadDashboard() {
-      if (!isLoggedIn()) { goRoute('login'); return; }
+      if (!isLoggedIn()) {
+        goRoute('login');
+        return;
+      }
       setMessage('dashboardMessage', 'Loading activities...', 'warning');
       const result = await client.from('activities').select('id, title, created_at').order('created_at', { ascending: false });
       if (result.error) {
@@ -531,7 +568,10 @@
         const actions = document.createElement('div');
         actions.className = 'action-links';
         const resultsLink = buildInlineLink('Results', '#');
-        resultsLink.addEventListener('click', function(e) { e.preventDefault(); goRoute('results', row.id); });
+        resultsLink.addEventListener('click', function(evt) {
+          evt.preventDefault();
+          goRoute('results', row.id);
+        });
         const studentLink = buildInlineLink('Student Link', base + '?view=play&id=' + row.id);
         studentLink.target = '_blank';
         actions.appendChild(resultsLink);
@@ -602,16 +642,28 @@
 
     function startGame() {
       const studentName = el('studentName').value.trim();
-      if (!studentName) { setMessage('studentGateMessage', 'Please enter your name.', 'error'); return; }
-      if (!state.activity || !state.activity.pairs) { setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error'); return; }
+      if (!studentName) {
+        setMessage('studentGateMessage', 'Please enter your name.', 'error');
+        return;
+      }
+      if (!state.activity || !state.activity.pairs) {
+        setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
+        return;
+      }
       state.studentName = studentName;
       resetGameState();
       el('studentGate').classList.add('hidden');
       el('gameArea').classList.remove('hidden');
-      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) { return { id: 'L' + index, pairId: index, text: pair.left }; }));
-      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) { return { id: 'R' + index, pairId: index, text: pair.right }; }));
+      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) {
+        return { id: 'L' + index, pairId: index, text: pair.left };
+      }));
+      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) {
+        return { id: 'R' + index, pairId: index, text: pair.right };
+      }));
       state.startTs = Date.now();
-      state.timerInt = setInterval(function() { el('timer').textContent = String(Math.floor((Date.now() - state.startTs) / 1000)); }, 1000);
+      state.timerInt = setInterval(function() {
+        el('timer').textContent = String(Math.floor((Date.now() - state.startTs) / 1000));
+      }, 1000);
       renderGame();
     }
 
@@ -627,7 +679,9 @@
         if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
         if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
         btn.textContent = item.text;
-        btn.addEventListener('click', function() { selectLeft(item.id); });
+        btn.addEventListener('click', function() {
+          selectLeft(item.id);
+        });
         leftList.appendChild(btn);
       });
       state.rightItems.forEach(function(item) {
@@ -637,15 +691,28 @@
         if (state.matchedRight.has(item.id)) btn.classList.add('correct');
         if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
         btn.textContent = item.text;
-        btn.addEventListener('click', function() { selectRight(item.id); });
+        btn.addEventListener('click', function() {
+          selectRight(item.id);
+        });
         rightList.appendChild(btn);
       });
       el('matchedCount').textContent = String(state.matchedLeft.size);
       el('attemptCount').textContent = String(state.attempts);
     }
 
-    function selectLeft(id) { if (state.matchedLeft.has(id)) return; state.selectedLeft = id; renderGame(); maybeCheckMatch(); }
-    function selectRight(id) { if (state.matchedRight.has(id)) return; state.selectedRight = id; renderGame(); maybeCheckMatch(); }
+    function selectLeft(id) {
+      if (state.matchedLeft.has(id)) return;
+      state.selectedLeft = id;
+      renderGame();
+      maybeCheckMatch();
+    }
+
+    function selectRight(id) {
+      if (state.matchedRight.has(id)) return;
+      state.selectedRight = id;
+      renderGame();
+      maybeCheckMatch();
+    }
 
     function clearWrongFlashSoon() {
       setTimeout(function() {
@@ -697,8 +764,17 @@
       el('finishOverlay').classList.remove('hidden');
     }
 
-    function closeFinishOverlay() { el('finishOverlay').classList.add('hidden'); }
-    function playAgain() { closeFinishOverlay(); el('studentGate').classList.remove('hidden'); el('gameArea').classList.add('hidden'); el('studentName').value = state.studentName; resetGameState(); }
+    function closeFinishOverlay() {
+      el('finishOverlay').classList.add('hidden');
+    }
+
+    function playAgain() {
+      closeFinishOverlay();
+      el('studentGate').classList.remove('hidden');
+      el('gameArea').classList.add('hidden');
+      el('studentName').value = state.studentName;
+      resetGameState();
+    }
 
     async function loadResults() {
       try {
@@ -715,7 +791,8 @@
         tbody.innerHTML = '';
         state.resultsRows.forEach(function(row) {
           const tr = document.createElement('tr');
-          [row.student_name, row.score, row.total, row.attempts, row.duration_seconds, new Date(row.created_at).toLocaleString()].forEach(function(value) {
+          const values = [row.student_name, row.score, row.total, row.attempts, row.duration_seconds, new Date(row.created_at).toLocaleString()];
+          values.forEach(function(value) {
             const td = document.createElement('td');
             td.textContent = String(value);
             tr.appendChild(td);
@@ -731,10 +808,14 @@
     }
 
     function downloadCsv() {
-      if (!state.resultsRows.length) { setMessage('resultsMessage', 'No results loaded yet.', 'error'); return; }
-      const lines = [['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(',')].concat(state.resultsRows.map(function(row) {
-        return [csvSafe(row.student_name), row.score, row.total, row.attempts, row.duration_seconds, csvSafe(new Date(row.created_at).toLocaleString())].join(',');
-      }));
+      if (!state.resultsRows.length) {
+        setMessage('resultsMessage', 'No results loaded yet.', 'error');
+        return;
+      }
+      const lines = [['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(',')];
+      state.resultsRows.forEach(function(row) {
+        lines.push([csvSafe(row.student_name), row.score, row.total, row.attempts, row.duration_seconds, csvSafe(new Date(row.created_at).toLocaleString())].join(','));
+      });
       const blob = new Blob([lines.join('
 ')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -747,8 +828,8 @@
 
     function csvSafe(value) {
       const text = String(value || '');
-      if (text.includes(',') || text.includes('"') || text.includes('
-')) {
+      if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('
+') !== -1) {
         return '"' + text.replaceAll('"', '""') + '"';
       }
       return text;
