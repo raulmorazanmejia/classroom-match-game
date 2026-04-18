@@ -249,6 +249,7 @@
       padding: 12px;
       border-bottom: 1px solid #e5e7eb;
       font-size: 0.95rem;
+      vertical-align: top;
     }
 
     th { background: #f9fafb; }
@@ -291,6 +292,12 @@
       margin: 10px 0 16px;
     }
 
+    .action-links {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     @media (max-width: 720px) {
       .wrap { padding: 14px; }
       .game-grid { grid-template-columns: 1fr; }
@@ -305,19 +312,44 @@
   <div class="wrap">
     <div class="topnav" id="nav"></div>
 
-    <section id="homeView" class="card hero hidden">
-      <h1>Assignable Match Game</h1>
-      <p class="muted">Create a mobile-friendly match activity, share the student link, and review submissions later.</p>
+    <section id="loginView" class="card hero hidden">
+      <h1>Teacher Login</h1>
+      <p class="muted">Log in once, then create activities and review results.</p>
       <div class="row">
-        <div class="col card" style="margin-bottom:0;">
-          <h2>Create Activity</h2>
-          <p>Paste pairs, publish, and get a student link and a results link.</p>
-          <button onclick="goRoute('create')">Create Now</button>
+        <div class="col">
+          <label for="loginName">Teacher Name</label>
+          <input id="loginName" placeholder="Your name" />
         </div>
-        <div class="col card" style="margin-bottom:0;">
-          <h2>Open Existing Activity</h2>
-          <p>Use the links you generate after publishing. Student links open the game. Results links open submissions.</p>
+        <div class="col">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" placeholder="Teacher password" />
         </div>
+      </div>
+      <div class="row" style="margin-top:14px;">
+        <button onclick="handleLogin()">Log In</button>
+      </div>
+      <div id="loginMessage"></div>
+    </section>
+
+    <section id="dashboardView" class="card hero hidden">
+      <h1>Teacher Dashboard</h1>
+      <p class="muted">Create activities, open student links, and review results.</p>
+      <div class="row" style="margin-bottom:14px;">
+        <button onclick="goRoute('create')">Create Activity</button>
+        <button class="secondary" onclick="loadDashboard()">Refresh</button>
+      </div>
+      <div id="dashboardMessage"></div>
+      <div style="overflow-x:auto; margin-top:12px;">
+        <table id="dashboardTable" class="hidden">
+          <thead>
+            <tr>
+              <th>Activity</th>
+              <th>Created</th>
+              <th>Links</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </section>
 
@@ -350,6 +382,7 @@
         <div class="row" style="margin-top:14px;">
           <button onclick="createActivity()">Generate Links</button>
           <button class="secondary" onclick="loadDemo()">Load Demo</button>
+          <button class="secondary" onclick="goRoute('dashboard')">Back to Dashboard</button>
         </div>
 
         <div id="createMessage"></div>
@@ -399,17 +432,11 @@
       <div class="card">
         <div class="pill">Teacher Results</div>
         <h1 id="resultsTitle">Results</h1>
-        <div class="row">
-          <div class="col">
-            <label for="resultsPass">Teacher Password</label>
-            <input id="resultsPass" type="password" placeholder="Enter the global teacher password" />
-          </div>
-          <div class="col" style="display:flex; align-items:flex-end; gap:10px;">
-            <button onclick="loadResults()">Load Results</button>
-            <button class="secondary" onclick="downloadCsv()">Download CSV</button>
-          </div>
-        </div>
         <div id="resultsMeta" class="muted" style="margin:12px 0 10px;"></div>
+        <div class="row" style="margin-bottom:12px;">
+          <button class="secondary" onclick="goRoute('dashboard')">Back to Dashboard</button>
+          <button class="secondary" onclick="downloadCsv()">Download CSV</button>
+        </div>
         <div id="resultsMessage"></div>
         <div style="overflow-x:auto; margin-top:12px;">
           <table id="resultsTable" class="hidden">
@@ -451,7 +478,7 @@
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const state = {
-      route: 'home',
+      route: 'login',
       activityId: null,
       activity: null,
       studentName: '',
@@ -471,6 +498,20 @@
 
     function el(id) {
       return document.getElementById(id);
+    }
+
+    function isLoggedIn() {
+      return sessionStorage.getItem('teacherLoggedIn') === '1';
+    }
+
+    function setLoggedIn(name) {
+      sessionStorage.setItem('teacherLoggedIn', '1');
+      sessionStorage.setItem('teacherName', name || 'Teacher');
+    }
+
+    function clearLogin() {
+      sessionStorage.removeItem('teacherLoggedIn');
+      sessionStorage.removeItem('teacherName');
     }
 
     function escapeHtml(str) {
@@ -505,16 +546,13 @@
         const audioCtx = new AudioContextClass();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
-
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
         oscillator.type = 'sine';
         oscillator.frequency.value = kind === 'correct' ? 660 : 220;
-
         gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
-
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
       } catch (e) {
@@ -524,7 +562,7 @@
     function slugRoute() {
       const url = new URL(window.location.href);
       return {
-        view: url.searchParams.get('view') || 'home',
+        view: url.searchParams.get('view') || '',
         id: url.searchParams.get('id')
       };
     }
@@ -541,24 +579,46 @@
       initRoute();
     }
 
+    function logout() {
+      clearLogin();
+      goRoute('login');
+    }
+
     window.addEventListener('popstate', initRoute);
 
     function renderNav() {
+      const loggedIn = isLoggedIn();
+      const routeInfo = slugRoute();
+      const view = routeInfo.view;
+      const isStudentView = view === 'play';
+
+      if (isStudentView) {
+        el('nav').innerHTML = '';
+        return;
+      }
+
+      if (!loggedIn) {
+        el('nav').innerHTML = '<a href="#" onclick="goRoute(\'login\'); return false;">Login</a>';
+        return;
+      }
+
       el('nav').innerHTML = [
-        '<a href="#" onclick="goRoute(\'home\'); return false;">Home</a>',
-        '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>'
+        '<a href="#" onclick="goRoute(\'dashboard\'); return false;">Dashboard</a>',
+        '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>',
+        '<a href="#" onclick="logout(); return false;">Log Out</a>'
       ].join('');
     }
 
     function showOnly(idToShow) {
-      ['homeView', 'createView', 'playView', 'resultsView'].forEach(function(sectionId) {
+      ['loginView', 'dashboardView', 'createView', 'playView', 'resultsView'].forEach(function(sectionId) {
         el(sectionId).classList.add('hidden');
       });
       el(idToShow).classList.remove('hidden');
     }
 
     function loadDemo() {
-      el('teacherName').value = 'Raul';
+      const savedName = sessionStorage.getItem('teacherName') || 'Raul';
+      el('teacherName').value = savedName;
       el('activityTitle').value = 'Passive Voice Match';
       el('pairsInput').value = [
         'destroyed, was destroyed by the tornado',
@@ -566,44 +626,94 @@
         'repaired, is being repaired now',
         'painted, was painted by students',
         'broken, was broken by the wind'
-      ].join('\n');
+      ].join('
+');
     }
 
     function parsePairs(text) {
       const lines = text
-        .split(/\r?\n/)
+        .split(/
+?
+/)
         .map(function(line) { return line.trim(); })
         .filter(Boolean);
 
       const parsed = [];
-
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         let separator = null;
-        if (line.includes('|')) {
-          separator = '|';
-        } else if (line.includes(',')) {
-          separator = ',';
-        } else {
-          throw new Error('Each line must contain one comma or one vertical bar: ' + line);
-        }
+        if (line.includes('|')) separator = '|';
+        else if (line.includes(',')) separator = ',';
+        else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
 
         const parts = line.split(separator);
         const left = (parts[0] || '').trim();
         const right = parts.slice(1).join(separator).trim();
 
-        if (!left || !right) {
-          throw new Error('Both sides must contain text: ' + line);
-        }
-
+        if (!left || !right) throw new Error('Both sides must contain text: ' + line);
         parsed.push({ left: left, right: right });
       }
 
-      if (parsed.length < 2) {
-        throw new Error('Please add at least 2 pairs.');
+      if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
+      return parsed;
+    }
+
+    function handleLogin() {
+      const name = el('loginName').value.trim();
+      const pass = el('loginPassword').value.trim();
+
+      if (!name) {
+        setMessage('loginMessage', 'Enter your name.', 'error');
+        return;
+      }
+      if (pass !== GLOBAL_TEACHER_PASSWORD) {
+        setMessage('loginMessage', 'Incorrect password.', 'error');
+        return;
       }
 
-      return parsed;
+      setLoggedIn(name);
+      setMessage('loginMessage', '', '');
+      goRoute('dashboard');
+    }
+
+    async function loadDashboard() {
+      if (!isLoggedIn()) {
+        goRoute('login');
+        return;
+      }
+
+      setMessage('dashboardMessage', 'Loading activities...', 'warning');
+      const result = await client
+        .from('activities')
+        .select('id, title, created_at')
+        .order('created_at', { ascending: false });
+
+      if (result.error) {
+        setMessage('dashboardMessage', escapeHtml(result.error.message || 'Could not load activities.'), 'error');
+        el('dashboardTable').classList.add('hidden');
+        return;
+      }
+
+      const rows = result.data || [];
+      const tbody = el('dashboardTable').querySelector('tbody');
+      const base = window.location.origin + window.location.pathname;
+
+      tbody.innerHTML = rows.map(function(row) {
+        const studentLink = base + '?view=play&id=' + row.id;
+        return '<tr>' +
+          '<td>' + escapeHtml(row.title) + '</td>' +
+          '<td>' + new Date(row.created_at).toLocaleString() + '</td>' +
+          '<td>' +
+            '<div class="action-links">' +
+              '<a href="#" onclick="goRoute(\'results\', \'" + row.id + "\'); return false;">Results</a>' +
+              '<a href="' + studentLink + '" target="_blank">Student Link</a>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      el('dashboardTable').classList.remove('hidden');
+      setMessage('dashboardMessage', rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.', 'success');
     }
 
     async function createActivity() {
@@ -676,10 +786,8 @@
       state.startTs = null;
       state.wrongFlashLeft = null;
       state.wrongFlashRight = null;
-
       if (state.timerInt) clearInterval(state.timerInt);
       state.timerInt = null;
-
       el('matchedCount').textContent = '0';
       el('attemptCount').textContent = '0';
       el('timer').textContent = '0';
@@ -795,13 +903,11 @@
 
     async function finishGame() {
       if (state.timerInt) clearInterval(state.timerInt);
-
       const duration = Math.floor((Date.now() - state.startTs) / 1000);
       const total = state.leftItems.length;
       const score = total;
 
       setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
-
       const result = await client.from('submissions').insert([{
         activity_id: state.activityId,
         student_name: state.studentName,
@@ -837,10 +943,6 @@
     async function loadResults() {
       try {
         setMessage('resultsMessage', 'Loading results...', 'warning');
-        const pass = el('resultsPass').value.trim();
-
-        if (!pass) throw new Error('Enter the teacher password.');
-        if (pass !== GLOBAL_TEACHER_PASSWORD) throw new Error('Incorrect teacher password.');
         if (!state.activityId) throw new Error('Missing activity id.');
 
         const activityResult = await client
@@ -903,7 +1005,8 @@
         })
       ];
 
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -914,7 +1017,8 @@
 
     function csvSafe(value) {
       const text = String(value || '');
-      if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+      if (text.includes(',') || text.includes('"') || text.includes('
+')) {
         return '"' + text.replaceAll('"', '""') + '"';
       }
       return text;
@@ -928,11 +1032,6 @@
       state.activityId = id || null;
       renderNav();
 
-      if (view === 'create') {
-        showOnly('createView');
-        return;
-      }
-
       if (view === 'play' && id) {
         showOnly('playView');
         closeFinishOverlay();
@@ -944,16 +1043,29 @@
         return;
       }
 
+      if (!isLoggedIn()) {
+        showOnly('loginView');
+        return;
+      }
+
+      if (view === 'create') {
+        showOnly('createView');
+        el('teacherName').value = sessionStorage.getItem('teacherName') || '';
+        return;
+      }
+
       if (view === 'results' && id) {
         showOnly('resultsView');
         el('resultsTitle').textContent = 'Results';
         el('resultsMeta').textContent = '';
         el('resultsTable').classList.add('hidden');
         setMessage('resultsMessage', '', '');
+        await loadResults();
         return;
       }
 
-      showOnly('homeView');
+      showOnly('dashboardView');
+      await loadDashboard();
     }
 
     initRoute();
