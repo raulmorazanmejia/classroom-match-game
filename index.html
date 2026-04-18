@@ -18,18 +18,17 @@
       --bad: #dc2626;
       --soft: #e0e7ff;
       --warn: #d97706;
-      --yellow: #fbbf24;
       --shadow: 0 14px 34px rgba(79, 70, 229, 0.12);
       --radius: 22px;
     }
 
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       font-family: Arial, Helvetica, sans-serif;
       color: var(--text);
-      background:
-        radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
+      background: radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
     }
 
     .wrap {
@@ -101,6 +100,7 @@
       color: #111827;
       box-shadow: none;
     }
+
     button.secondary:hover { background: #d1d5db; }
 
     .pill {
@@ -444,16 +444,10 @@
     </div>
   </div>
 
-  <audio id="correctSound" preload="auto"></audio>
-  <audio id="wrongSound" preload="auto"></audio>
-
   <script>
-    // ======================
-    // CONFIGURE THESE VALUES
-    // ======================
     const SUPABASE_URL = "https://cpouyxzsnmoiskxhrcut.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra";
-    const GLOBAL_TEACHER_PASSWORD = "teach1234"; // change this once, for the whole app
+    const GLOBAL_TEACHER_PASSWORD = "intel123";
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -472,10 +466,13 @@
       startTs: null,
       timerInt: null,
       resultsRows: [],
-      wrongFlash: { left: null, right: null },
+      wrongFlashLeft: null,
+      wrongFlashRight: null
     };
 
-    function el(id) { return document.getElementById(id); }
+    function el(id) {
+      return document.getElementById(id);
+    }
 
     function escapeHtml(str) {
       return String(str)
@@ -486,33 +483,39 @@
         .replaceAll("'", '&#039;');
     }
 
-    function setMessage(id, html, kind = '') {
-      const klass = kind ? `notice ${kind}` : '';
-      el(id).innerHTML = html ? `<div class="${klass}">${html}</div>` : '';
+    function setMessage(id, html, kind) {
+      const klass = kind ? 'notice ' + kind : '';
+      el(id).innerHTML = html ? '<div class="' + klass + '">' + html + '</div>' : '';
     }
 
     function shuffle(arr) {
-      const copy = [...arr];
-      for (let i = copy.length - 1; i > 0; i--) {
+      const copy = arr.slice();
+      for (let i = copy.length - 1; i > 0; i -= 1) {
         const j = Math.floor(Math.random() * (i + 1));
-        [copy[i], copy[j]] = [copy[j], copy[i]];
+        const temp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = temp;
       }
       return copy;
     }
 
     function playTone(kind) {
       try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const audioCtx = new AudioContextClass();
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
+
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
-
         oscillator.type = 'sine';
         oscillator.frequency.value = kind === 'correct' ? 660 : 220;
+
         gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
         gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
+
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
       } catch (e) {
@@ -524,14 +527,17 @@
       const url = new URL(window.location.href);
       const view = url.searchParams.get('view') || 'home';
       const id = url.searchParams.get('id');
-      return { view, id };
+      return { view: view, id: id };
     }
 
-    function goRoute(view, id = null) {
+    function goRoute(view, id) {
       const url = new URL(window.location.href);
       url.searchParams.set('view', view);
-      if (id) url.searchParams.set('id', id);
-      else url.searchParams.delete('id');
+      if (id) {
+        url.searchParams.set('id', id);
+      } else {
+        url.searchParams.delete('id');
+      }
       history.pushState({}, '', url);
       initRoute();
     }
@@ -540,16 +546,21 @@
 
     function renderNav(view, id) {
       const nav = el('nav');
-      let html = `<a href="#" onclick="goRoute('home'); return false;">Home</a>`;
-      html += `<a href="#" onclick="goRoute('create'); return false;">Create</a>`;
-      if (view === 'play' && id) html += `<a href="#" onclick="goRoute('play', '${id}'); return false;">Student Activity</a>`;
-      if (view === 'results' && id) html += `<a href="#" onclick="goRoute('results', '${id}'); return false;">Results</a>`;
+      let html = '<a href="#" onclick="goRoute(\'home\'); return false;">Home</a>';
+      html += '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>';
+      if (view === 'play' && id) {
+        html += '<a href="#" onclick="goRoute(\'play\', \'" + id + "\'); return false;">Student Activity</a>';
+      }
+      if (view === 'results' && id) {
+        html += '<a href="#" onclick="goRoute(\'results\', \'" + id + "\'); return false;">Results</a>';
+      }
       nav.innerHTML = html;
     }
 
     function showOnly(idToShow) {
-      ['homeView','createView','playView','resultsView'].forEach(id => {
-        el(id).classList.add('hidden');
+      const ids = ['homeView', 'createView', 'playView', 'resultsView'];
+      ids.forEach(function(sectionId) {
+        el(sectionId).classList.add('hidden');
       });
       el(idToShow).classList.remove('hidden');
     }
@@ -572,31 +583,36 @@
         .split(/
 ?
 /)
-        .map(line => line.trim())
+        .map(function(line) { return line.trim(); })
         .filter(Boolean);
 
       const parsed = [];
+
       for (const line of lines) {
-        let parts;
+        let separator = null;
         if (line.includes('|')) {
-          parts = line.split('|');
+          separator = '|';
         } else if (line.includes(',')) {
-          parts = line.split(',');
+          separator = ',';
         } else {
-          throw new Error(`Each line must contain one comma or one vertical bar: ${line}`);
+          throw new Error('Each line must contain one comma or one vertical bar: ' + line);
         }
 
+        const parts = line.split(separator);
         const left = (parts[0] || '').trim();
-        const right = parts.slice(1).join(parts === line.split('|') ? '|' : ',').trim();
+        const right = parts.slice(1).join(separator).trim();
 
         if (!left || !right) {
-          throw new Error(`Both sides must contain text: ${line}`);
+          throw new Error('Both sides must contain text: ' + line);
         }
 
-        parsed.push({ left, right });
+        parsed.push({ left: left, right: right });
       }
 
-      if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
+      if (parsed.length < 2) {
+        throw new Error('Please add at least 2 pairs.');
+      }
+
       return parsed;
     }
 
@@ -607,30 +623,37 @@
         const title = el('activityTitle').value.trim();
         const pairsRaw = el('pairsInput').value;
 
-        if (!teacher_name) throw new Error('Enter your name.');
-        if (!title) throw new Error('Enter an activity title.');
+        if (!teacher_name) {
+          throw new Error('Enter your name.');
+        }
+        if (!title) {
+          throw new Error('Enter an activity title.');
+        }
 
         const pairs = parsePairs(pairsRaw);
 
-        const { data, error } = await client
+        const result = await client
           .from('activities')
-          .insert([{ title, teacher_name, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs }])
+          .insert([{ title: title, teacher_name: teacher_name, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: pairs }])
           .select()
           .single();
 
-        if (error) throw error;
+        if (result.error) {
+          throw result.error;
+        }
 
+        const data = result.data;
         const base = window.location.origin + window.location.pathname;
-        const studentLink = `${base}?view=play&id=${data.id}`;
-        const resultsLink = `${base}?view=results&id=${data.id}`;
+        const studentLink = base + '?view=play&id=' + data.id;
+        const resultsLink = base + '?view=results&id=' + data.id;
 
         setMessage(
           'createMessage',
-          `Activity created.<br><br>
-          <strong>Student Link:</strong><br>
-          <a href="${studentLink}" target="_blank">${studentLink}</a><br><br>
-          <strong>Results Link:</strong><br>
-          <a href="${resultsLink}" target="_blank">${resultsLink}</a>`,
+          'Activity created.<br><br>' +
+          '<strong>Student Link:</strong><br>' +
+          '<a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br>' +
+          '<strong>Results Link:</strong><br>' +
+          '<a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>',
           'success'
         );
       } catch (err) {
@@ -640,21 +663,21 @@
 
     async function loadActivityForPlay(id) {
       setMessage('studentGateMessage', 'Loading activity...', 'warning');
-      const { data, error } = await client
+      const result = await client
         .from('activities')
         .select('id, title, pairs')
         .eq('id', id)
         .single();
 
-      if (error || !data) {
+      if (result.error || !result.data) {
         el('playTitle').textContent = 'Activity not found';
         setMessage('studentGateMessage', 'Could not load this activity.', 'error');
         return;
       }
 
-      state.activity = data;
-      state.activityId = data.id;
-      el('playTitle').textContent = data.title;
+      state.activity = result.data;
+      state.activityId = result.data.id;
+      el('playTitle').textContent = result.data.title;
       setMessage('studentGateMessage', '', '');
     }
 
@@ -667,9 +690,14 @@
       state.matchedRight = new Set();
       state.attempts = 0;
       state.startTs = null;
-      state.wrongFlash = { left: null, right: null };
-      if (state.timerInt) clearInterval(state.timerInt);
+      state.wrongFlashLeft = null;
+      state.wrongFlashRight = null;
+
+      if (state.timerInt) {
+        clearInterval(state.timerInt);
+      }
       state.timerInt = null;
+
       el('matchedCount').textContent = '0';
       el('attemptCount').textContent = '0';
       el('timer').textContent = '0';
@@ -678,10 +706,12 @@
 
     function startGame() {
       const studentName = el('studentName').value.trim();
+
       if (!studentName) {
         setMessage('studentGateMessage', 'Please enter your name.', 'error');
         return;
       }
+
       if (!state.activity || !state.activity.pairs) {
         setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
         return;
@@ -692,20 +722,24 @@
       el('studentGate').classList.add('hidden');
       el('gameArea').classList.remove('hidden');
 
-      state.leftItems = shuffle(state.activity.pairs.map((pair, index) => ({
-        id: `L${index}`,
-        pairId: index,
-        text: pair.left,
-      })));
+      state.leftItems = shuffle(state.activity.pairs.map(function(pair, index) {
+        return {
+          id: 'L' + index,
+          pairId: index,
+          text: pair.left
+        };
+      }));
 
-      state.rightItems = shuffle(state.activity.pairs.map((pair, index) => ({
-        id: `R${index}`,
-        pairId: index,
-        text: pair.right,
-      })));
+      state.rightItems = shuffle(state.activity.pairs.map(function(pair, index) {
+        return {
+          id: 'R' + index,
+          pairId: index,
+          text: pair.right
+        };
+      }));
 
       state.startTs = Date.now();
-      state.timerInt = setInterval(() => {
+      state.timerInt = setInterval(function() {
         const secs = Math.floor((Date.now() - state.startTs) / 1000);
         el('timer').textContent = String(secs);
       }, 1000);
@@ -714,18 +748,18 @@
     }
 
     function renderGame() {
-      const leftHtml = state.leftItems.map(item => {
+      const leftHtml = state.leftItems.map(function(item) {
         const selected = state.selectedLeft === item.id ? 'selected' : '';
         const correct = state.matchedLeft.has(item.id) ? 'correct' : '';
-        const wrong = state.wrongFlash.left === item.id ? 'wrong' : '';
-        return `<button class="match-btn ${selected} ${correct} ${wrong}" onclick="selectLeft('${item.id}')">${escapeHtml(item.text)}</button>`;
+        const wrong = state.wrongFlashLeft === item.id ? 'wrong' : '';
+        return '<button class="match-btn ' + selected + ' ' + correct + ' ' + wrong + '" onclick="selectLeft(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
-      const rightHtml = state.rightItems.map(item => {
+      const rightHtml = state.rightItems.map(function(item) {
         const selected = state.selectedRight === item.id ? 'selected' : '';
         const correct = state.matchedRight.has(item.id) ? 'correct' : '';
-        const wrong = state.wrongFlash.right === item.id ? 'wrong' : '';
-        return `<button class="match-btn ${selected} ${correct} ${wrong}" onclick="selectRight('${item.id}')">${escapeHtml(item.text)}</button>`;
+        const wrong = state.wrongFlashRight === item.id ? 'wrong' : '';
+        return '<button class="match-btn ' + selected + ' ' + correct + ' ' + wrong + '" onclick="selectRight(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
       el('leftList').innerHTML = leftHtml;
@@ -749,8 +783,9 @@
     }
 
     function clearWrongFlashSoon() {
-      setTimeout(() => {
-        state.wrongFlash = { left: null, right: null };
+      setTimeout(function() {
+        state.wrongFlashLeft = null;
+        state.wrongFlashRight = null;
         renderGame();
       }, 500);
     }
@@ -758,18 +793,20 @@
     function maybeCheckMatch() {
       if (!state.selectedLeft || !state.selectedRight) return;
 
-      const left = state.leftItems.find(x => x.id === state.selectedLeft);
-      const right = state.rightItems.find(x => x.id === state.selectedRight);
+      const left = state.leftItems.find(function(x) { return x.id === state.selectedLeft; });
+      const right = state.rightItems.find(function(x) { return x.id === state.selectedRight; });
       state.attempts += 1;
 
       if (left.pairId === right.pairId) {
         state.matchedLeft.add(left.id);
         state.matchedRight.add(right.id);
-        state.wrongFlash = { left: null, right: null };
+        state.wrongFlashLeft = null;
+        state.wrongFlashRight = null;
         setMessage('gameMessage', 'Nice! Correct match.', 'success');
         playTone('correct');
       } else {
-        state.wrongFlash = { left: left.id, right: right.id };
+        state.wrongFlashLeft = left.id;
+        state.wrongFlashRight = right.id;
         setMessage('gameMessage', 'Try again.', 'error');
         playTone('wrong');
         clearWrongFlashSoon();
@@ -785,30 +822,33 @@
     }
 
     async function finishGame() {
-      if (state.timerInt) clearInterval(state.timerInt);
+      if (state.timerInt) {
+        clearInterval(state.timerInt);
+      }
+
       const duration = Math.floor((Date.now() - state.startTs) / 1000);
       const total = state.leftItems.length;
       const score = total;
 
       setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
 
-      const { error } = await client.from('submissions').insert([{
+      const result = await client.from('submissions').insert([{
         activity_id: state.activityId,
         student_name: state.studentName,
-        score,
-        total,
+        score: score,
+        total: total,
         attempts: state.attempts,
-        duration_seconds: duration,
+        duration_seconds: duration
       }]);
 
-      if (error) {
+      if (result.error) {
         setMessage('gameMessage', 'You finished, but the result could not be saved.', 'error');
         return;
       }
 
       setMessage('gameMessage', 'Done. Your result was saved.', 'success');
-      el('finishScore').textContent = `${score}/${total}`;
-      el('finishDetails').innerHTML = `Attempts: <strong>${state.attempts}</strong> &nbsp; | &nbsp; Time: <strong>${duration}s</strong>`;
+      el('finishScore').textContent = score + '/' + total;
+      el('finishDetails').innerHTML = 'Attempts: <strong>' + state.attempts + '</strong> | Time: <strong>' + duration + 's</strong>';
       el('finishOverlay').classList.remove('hidden');
     }
 
@@ -828,44 +868,55 @@
       try {
         setMessage('resultsMessage', 'Loading results...', 'warning');
         const pass = el('resultsPass').value.trim();
-        if (!pass) throw new Error('Enter the teacher password.');
-        if (pass !== GLOBAL_TEACHER_PASSWORD) throw new Error('Incorrect teacher password.');
-        if (!state.activityId) throw new Error('Missing activity id.');
 
-        const { data: activity, error: activityError } = await client
+        if (!pass) {
+          throw new Error('Enter the teacher password.');
+        }
+        if (pass !== GLOBAL_TEACHER_PASSWORD) {
+          throw new Error('Incorrect teacher password.');
+        }
+        if (!state.activityId) {
+          throw new Error('Missing activity id.');
+        }
+
+        const activityResult = await client
           .from('activities')
           .select('id, title, created_at')
           .eq('id', state.activityId)
           .single();
 
-        if (activityError || !activity) throw new Error('Could not load activity.');
+        if (activityResult.error || !activityResult.data) {
+          throw new Error('Could not load activity.');
+        }
 
-        const { data: rows, error: rowsError } = await client
+        const rowsResult = await client
           .from('submissions')
           .select('student_name, score, total, attempts, duration_seconds, created_at')
           .eq('activity_id', state.activityId)
           .order('created_at', { ascending: false });
 
-        if (rowsError) throw rowsError;
+        if (rowsResult.error) {
+          throw rowsResult.error;
+        }
 
-        state.resultsRows = rows || [];
-        el('resultsTitle').textContent = `Results: ${activity.title}`;
-        el('resultsMeta').textContent = `Activity created: ${new Date(activity.created_at).toLocaleString()}`;
+        state.resultsRows = rowsResult.data || [];
+        el('resultsTitle').textContent = 'Results: ' + activityResult.data.title;
+        el('resultsMeta').textContent = 'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
 
         const tbody = el('resultsTable').querySelector('tbody');
-        tbody.innerHTML = state.resultsRows.map(row => `
-          <tr>
-            <td>${escapeHtml(row.student_name)}</td>
-            <td>${row.score}</td>
-            <td>${row.total}</td>
-            <td>${row.attempts}</td>
-            <td>${row.duration_seconds}</td>
-            <td>${new Date(row.created_at).toLocaleString()}</td>
-          </tr>
-        `).join('');
+        tbody.innerHTML = state.resultsRows.map(function(row) {
+          return '<tr>' +
+            '<td>' + escapeHtml(row.student_name) + '</td>' +
+            '<td>' + row.score + '</td>' +
+            '<td>' + row.total + '</td>' +
+            '<td>' + row.attempts + '</td>' +
+            '<td>' + row.duration_seconds + '</td>' +
+            '<td>' + new Date(row.created_at).toLocaleString() + '</td>' +
+          '</tr>';
+        }).join('');
 
         el('resultsTable').classList.remove('hidden');
-        setMessage('resultsMessage', `${state.resultsRows.length} submission(s) loaded.`, 'success');
+        setMessage('resultsMessage', state.resultsRows.length + ' submission(s) loaded.', 'success');
       } catch (err) {
         el('resultsTable').classList.add('hidden');
         setMessage('resultsMessage', escapeHtml(err.message || 'Could not load results.'), 'error');
@@ -879,15 +930,17 @@
       }
 
       const lines = [
-        ['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(','),
-        ...state.resultsRows.map(row => [
-          csvSafe(row.student_name),
-          row.score,
-          row.total,
-          row.attempts,
-          row.duration_seconds,
-          csvSafe(new Date(row.created_at).toLocaleString())
-        ].join(','))
+        ['Name', 'Score', 'Total', 'Attempts', 'DurationSeconds', 'CompletedAt'].join(','),
+        ...state.resultsRows.map(function(row) {
+          return [
+            csvSafe(row.student_name),
+            row.score,
+            row.total,
+            row.attempts,
+            row.duration_seconds,
+            csvSafe(new Date(row.created_at).toLocaleString())
+          ].join(',');
+        })
       ];
 
       const blob = new Blob([lines.join('
@@ -901,7 +954,7 @@
     }
 
     function csvSafe(value) {
-      const text = String(value ?? '');
+      const text = String(value || '');
       if (text.includes(',') || text.includes('"') || text.includes('
 ')) {
         return '"' + text.replaceAll('"', '""') + '"';
@@ -910,7 +963,9 @@
     }
 
     async function initRoute() {
-      const { view, id } = slugRoute();
+      const routeInfo = slugRoute();
+      const view = routeInfo.view;
+      const id = routeInfo.id;
       state.route = view;
       state.activityId = id || null;
       renderNav(view, id);
@@ -946,6 +1001,4 @@
     initRoute();
   </script>
 </body>
-</html>
-
 </html>
