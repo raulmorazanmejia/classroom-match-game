@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assignable Match Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --accent: #2563eb;
+      --accent-2: #1d4ed8;
+      --good: #047857;
+      --bad: #b91c1c;
+      --soft: #eef2ff;
+      --warn: #92400e;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .wrap {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    h1, h2, h3 { margin-top: 0; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.4rem; }
+    p { line-height: 1.5; }
+
+    .muted { color: var(--muted); }
+    .hidden { display: none !important; }
+    .row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .col { flex: 1 1 300px; }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      background: white;
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      font-family: Consolas, monospace;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button:hover { background: var(--accent-2); }
+    button.secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+    button.secondary:hover { background: #d1d5db; }
+
+    .pill {
+      display: inline-block;
+      background: var(--soft);
+      color: var(--accent-2);
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .notice {
+      border-left: 5px solid var(--accent);
+      background: #eff6ff;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-top: 12px;
+    }
+
+    .error {
+      border-left-color: var(--bad);
+      background: #fef2f2;
+      color: #7f1d1d;
+    }
+
+    .success {
+      border-left-color: var(--good);
+      background: #ecfdf5;
+      color: #065f46;
+    }
+
+    .warning {
+      border-left-color: var(--warn);
+      background: #fffbeb;
+      color: #78350f;
+    }
+
+    .topnav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .topnav a {
+      text-decoration: none;
+      background: white;
+      padding: 10px 14px;
+      border-radius: 12px;
+      color: var(--text);
+      font-weight: 700;
+      box-shadow: var(--shadow);
+    }
+
+    .game-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .match-btn {
+      width: 100%;
+      text-align: left;
+      background: white;
+      color: var(--text);
+      border: 2px solid #dbeafe;
+      border-radius: 16px;
+      padding: 16px;
+      font-weight: 700;
+      min-height: 64px;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.08);
+    }
+
+    .match-btn:hover { background: #f8fbff; }
+    .match-btn.selected {
+      border-color: var(--accent);
+      background: #dbeafe;
+    }
+    .match-btn.correct {
+      border-color: #10b981;
+      background: #d1fae5;
+      color: #065f46;
+      cursor: default;
+    }
+    .match-btn.disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 14px 0;
+    }
+
+    .stat {
+      background: white;
+      border-radius: 14px;
+      padding: 10px 12px;
+      box-shadow: var(--shadow);
+      font-weight: 700;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.95rem;
+    }
+
+    th { background: #f9fafb; }
+
+    code.inline {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 720px) {
+      .wrap { padding: 14px; }
+      .game-grid { grid-template-columns: 1fr; }
+      h1 { font-size: 1.55rem; }
+      .card { padding: 16px; }
+      button, input, textarea { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="topnav" id="nav"></div>
+
+    <section id="homeView" class="card hidden">
+      <h1>Assignable Match Game</h1>
+      <p class="muted">Create a mobile-friendly match activity, share the student link, and review submissions later.</p>
+      <div class="row">
+        <div class="col card" style="margin-bottom:0;">
+          <h2>Create Activity</h2>
+          <p>Paste pairs, publish, and get a student link and a results link.</p>
+          <button onclick="goRoute('create')">Create Now</button>
+        </div>
+        <div class="col card" style="margin-bottom:0;">
+          <h2>Open Existing Activity</h2>
+          <p>Use the links you generate after publishing. Student links open the game. Results links open submissions.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="createView" class="hidden">
+      <div class="card">
+        <h1>Create Match Activity</h1>
+        <p class="muted">Format each line like this: <code class="inline">left item, right item</code></p>
+
+        <div class="row">
+          <div class="col">
+            <label for="teacherName">Teacher/Admin Name</label>
+            <input id="teacherName" placeholder="Your name" />
+          </div>
+          <div class="col">
+            <label for="teacherPass">Teacher Password</label>
+            <input id="teacherPass" type="password" placeholder="A simple password you choose" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col">
+            <label for="activityTitle">Activity Title</label>
+            <input id="activityTitle" placeholder="Passive Voice Match Practice" />
+          </div>
+        </div>
+
+        <label for="pairsInput">Pairs</label>
+        <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen, was stolen last night&#10;broken, was broken by the wind"></textarea>
+
+        <div class="stats">
+          <div class="stat">Mobile-friendly</div>
+          <div class="stat">Tap-to-match</div>
+          <div class="stat">Stores student results</div>
+        </div>
+
+        <div class="row">
+          <button onclick="createActivity()">Generate Links</button>
+          <button class="secondary" onclick="loadDemo()">Load Demo</button>
+        </div>
+
+        <div id="createMessage"></div>
+      </div>
+    </section>
+
+    <section id="playView" class="hidden">
+      <div class="card">
+        <div class="pill">Student Activity</div>
+        <h1 id="playTitle">Match Activity</h1>
+        <p class="muted" id="playInstructions">Match the items. When you finish, your result will be saved automatically.</p>
+
+        <div id="studentGate">
+          <label for="studentName">Your Name</label>
+          <input id="studentName" placeholder="Enter your name" />
+          <div style="margin-top:12px;">
+            <button onclick="startGame()">Start</button>
+          </div>
+          <div id="studentGateMessage"></div>
+        </div>
+
+        <div id="gameArea" class="hidden">
+          <div class="stats">
+            <div class="stat">Matched: <span id="matchedCount">0</span></div>
+            <div class="stat">Attempts: <span id="attemptCount">0</span></div>
+            <div class="stat">Time: <span id="timer">0</span>s</div>
+          </div>
+          <div class="notice warning" style="margin-bottom:14px;">
+            Tap one item on the left and one item on the right. Correct pairs stay locked.
+          </div>
+          <div class="game-grid">
+            <div>
+              <h3>Left</h3>
+              <div id="leftList" class="option-list"></div>
+            </div>
+            <div>
+              <h3>Right</h3>
+              <div id="rightList" class="option-list"></div>
+            </div>
+          </div>
+          <div id="gameMessage"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resultsView" class="hidden">
+      <div class="card">
+        <div class="pill">Teacher Results</div>
+        <h1 id="resultsTitle">Results</h1>
+        <div class="row">
+          <div class="col">
+            <label for="resultsPass">Teacher Password</label>
+            <input id="resultsPass" type="password" placeholder="Enter the password for this activity" />
+          </div>
+          <div class="col" style="display:flex; align-items:flex-end; gap:10px;">
+            <button onclick="loadResults()">Load Results</button>
+            <button class="secondary" onclick="downloadCsv()">Download CSV</button>
+          </div>
+        </div>
+        <div id="resultsMeta" class="muted" style="margin:12px 0 10px;"></div>
+        <div id="resultsMessage"></div>
+        <div style="overflow-x:auto; margin-top:12px;">
+          <table id="resultsTable" class="hidden">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Total</th>
+                <th>Attempts</th>
+                <th>Duration (s)</th>
+                <th>Completed</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // ======================
+    // 1) CONFIGURE THESE TWO VALUES
+    // ======================
+    const SUPABASE_URL = "https://cpouyxzsnmoiskxhrcut.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra";
+
+    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const state = {
+      route: 'home',
+      activityId: null,
+      activity: null,
+      studentName: '',
+      leftItems: [],
+      rightItems: [],
+      selectedLeft: null,
+      selectedRight: null,
+      matchedLeft: new Set(),
+      matchedRight: new Set(),
+      attempts: 0,
+      startTs: null,
+      timerInt: null,
+      resultsRows: [],
+    };
+
+    function el(id) { return document.getElementById(id); }
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function setMessage(id, html, kind = '') {
+      const klass = kind ? `notice ${kind}` : '';
+      el(id).innerHTML = html ? `<div class="${klass}">${html}</div>` : '';
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function slugRoute() {
+      const url = new URL(window.location.href);
+      const view = url.searchParams.get('view') || 'home';
+      const id = url.searchParams.get('id');
+      return { view, id };
+    }
+
+    function goRoute(view, id = null) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('view', view);
+      if (id) url.searchParams.set('id', id);
+      else url.searchParams.delete('id');
+      history.pushState({}, '', url);
+      initRoute();
+    }
+
+    window.addEventListener('popstate', initRoute);
+
+    function renderNav(view, id) {
+      const nav = el('nav');
+      let html = `<a href="#" onclick="goRoute('home'); return false;">Home</a>`;
+      html += `<a href="#" onclick="goRoute('create'); return false;">Create</a>`;
+      if (view === 'play' && id) html += `<a href="#" onclick="goRoute('play', '${id}'); return false;">Student Activity</a>`;
+      if (view === 'results' && id) html += `<a href="#" onclick="goRoute('results', '${id}'); return false;">Results</a>`;
+      nav.innerHTML = html;
+    }
+
+    function showOnly(idToShow) {
+      ['homeView','createView','playView','resultsView'].forEach(id => {
+        el(id).classList.add('hidden');
+      });
+      el(idToShow).classList.remove('hidden');
+    }
+
+    function loadDemo() {
+      el('teacherName').value = 'Raul';
+      el('teacherPass').value = 'teach123';
+      el('activityTitle').value = 'Passive Voice Match';
+      el('pairsInput').value = [
+        'destroyed, was destroyed by the tornado',
+        'stolen, was stolen last night',
+        'repaired, is being repaired now',
+        'painted, was painted by students',
+        'broken, was broken by the wind'
+      ].join('\n');
+    }
+
+    function parsePairs(text) {
+      const lines = text
+        .split(/\r?\n/)
+        .map(line => line.trim())
+        .filter(Boolean);
+
+      const parsed = [];
+      for (const line of lines) {
+        const commaIndex = line.indexOf(',');
+        if (commaIndex === -1) {
+          throw new Error(`Each line must contain one comma: ${line}`);
+        }
+        const left = line.slice(0, commaIndex).trim();
+        const right = line.slice(commaIndex + 1).trim();
+        if (!left || !right) {
+          throw new Error(`Both sides must contain text: ${line}`);
+        }
+        parsed.push({ left, right });
+      }
+      if (parsed.length < 2) throw new Error('Please add at least 2 pairs.');
+      return parsed;
+    }
+
+    async function createActivity() {
+      try {
+        setMessage('createMessage', 'Saving activity...', 'warning');
+        const teacher_name = el('teacherName').value.trim();
+        const teacher_password = el('teacherPass').value.trim();
+        const title = el('activityTitle').value.trim();
+        const pairsRaw = el('pairsInput').value;
+
+        if (!teacher_name) throw new Error('Enter your name.');
+        if (!teacher_password || teacher_password.length < 4) throw new Error('Use a simple teacher password with at least 4 characters.');
+        if (!title) throw new Error('Enter an activity title.');
+
+        const pairs = parsePairs(pairsRaw);
+
+        const { data, error } = await client
+          .from('activities')
+          .insert([{ title, teacher_name, teacher_password, pairs }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        const base = window.location.origin + window.location.pathname;
+        const studentLink = `${base}?view=play&id=${data.id}`;
+        const resultsLink = `${base}?view=results&id=${data.id}`;
+
+        setMessage(
+          'createMessage',
+          `Activity created.<br><br>
+          <strong>Student Link:</strong><br>
+          <a href="${studentLink}" target="_blank">${studentLink}</a><br><br>
+          <strong>Results Link:</strong><br>
+          <a href="${resultsLink}" target="_blank">${resultsLink}</a>`,
+          'success'
+        );
+      } catch (err) {
+        setMessage('createMessage', escapeHtml(err.message || 'Could not create activity.'), 'error');
+      }
+    }
+
+    async function loadActivityForPlay(id) {
+      setMessage('studentGateMessage', 'Loading activity...', 'warning');
+      const { data, error } = await client
+        .from('activities')
+        .select('id, title, pairs')
+        .eq('id', id)
+        .single();
+
+      if (error || !data) {
+        el('playTitle').textContent = 'Activity not found';
+        setMessage('studentGateMessage', 'Could not load this activity.', 'error');
+        return;
+      }
+
+      state.activity = data;
+      state.activityId = data.id;
+      el('playTitle').textContent = data.title;
+      setMessage('studentGateMessage', '', '');
+    }
+
+    function resetGameState() {
+      state.leftItems = [];
+      state.rightItems = [];
+      state.selectedLeft = null;
+      state.selectedRight = null;
+      state.matchedLeft = new Set();
+      state.matchedRight = new Set();
+      state.attempts = 0;
+      state.startTs = null;
+      if (state.timerInt) clearInterval(state.timerInt);
+      state.timerInt = null;
+      el('matchedCount').textContent = '0';
+      el('attemptCount').textContent = '0';
+      el('timer').textContent = '0';
+      setMessage('gameMessage', '', '');
+    }
+
+    function startGame() {
+      const studentName = el('studentName').value.trim();
+      if (!studentName) {
+        setMessage('studentGateMessage', 'Please enter your name.', 'error');
+        return;
+      }
+      if (!state.activity || !state.activity.pairs) {
+        setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
+        return;
+      }
+
+      state.studentName = studentName;
+      resetGameState();
+      el('studentGate').classList.add('hidden');
+      el('gameArea').classList.remove('hidden');
+
+      state.leftItems = shuffle(state.activity.pairs.map((pair, index) => ({
+        id: `L${index}`,
+        pairId: index,
+        text: pair.left,
+      })));
+
+      state.rightItems = shuffle(state.activity.pairs.map((pair, index) => ({
+        id: `R${index}`,
+        pairId: index,
+        text: pair.right,
+      })));
+
+      state.startTs = Date.now();
+      state.timerInt = setInterval(() => {
+        const secs = Math.floor((Date.now() - state.startTs) / 1000);
+        el('timer').textContent = String(secs);
+      }, 1000);
+
+      renderGame();
+    }
+
+    function renderGame() {
+      const leftHtml = state.leftItems.map(item => {
+        const selected = state.selectedLeft === item.id ? 'selected' : '';
+        const correct = state.matchedLeft.has(item.id) ? 'correct disabled' : '';
+        return `<button class="match-btn ${selected} ${correct}" onclick="selectLeft('${item.id}')">${escapeHtml(item.text)}</button>`;
+      }).join('');
+
+      const rightHtml = state.rightItems.map(item => {
+        const selected = state.selectedRight === item.id ? 'selected' : '';
+        const correct = state.matchedRight.has(item.id) ? 'correct disabled' : '';
+        return `<button class="match-btn ${selected} ${correct}" onclick="selectRight('${item.id}')">${escapeHtml(item.text)}</button>`;
+      }).join('');
+
+      el('leftList').innerHTML = leftHtml;
+      el('rightList').innerHTML = rightHtml;
+      el('matchedCount').textContent = String(state.matchedLeft.size);
+      el('attemptCount').textContent = String(state.attempts);
+    }
+
+    function selectLeft(id) {
+      if (state.matchedLeft.has(id)) return;
+      state.selectedLeft = id;
+      renderGame();
+      maybeCheckMatch();
+    }
+
+    function selectRight(id) {
+      if (state.matchedRight.has(id)) return;
+      state.selectedRight = id;
+      renderGame();
+      maybeCheckMatch();
+    }
+
+    function maybeCheckMatch() {
+      if (!state.selectedLeft || !state.selectedRight) return;
+
+      const left = state.leftItems.find(x => x.id === state.selectedLeft);
+      const right = state.rightItems.find(x => x.id === state.selectedRight);
+      state.attempts += 1;
+
+      if (left.pairId === right.pairId) {
+        state.matchedLeft.add(left.id);
+        state.matchedRight.add(right.id);
+        setMessage('gameMessage', 'Correct.', 'success');
+      } else {
+        setMessage('gameMessage', 'Not a match. Try again.', 'error');
+      }
+
+      state.selectedLeft = null;
+      state.selectedRight = null;
+      renderGame();
+
+      if (state.matchedLeft.size === state.leftItems.length) {
+        finishGame();
+      }
+    }
+
+    async function finishGame() {
+      if (state.timerInt) clearInterval(state.timerInt);
+      const duration = Math.floor((Date.now() - state.startTs) / 1000);
+      const total = state.leftItems.length;
+      const score = total;
+
+      setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
+
+      const { error } = await client.from('submissions').insert([{
+        activity_id: state.activityId,
+        student_name: state.studentName,
+        score,
+        total,
+        attempts: state.attempts,
+        duration_seconds: duration,
+      }]);
+
+      if (error) {
+        setMessage('gameMessage', 'You finished, but the result could not be saved.', 'error');
+        return;
+      }
+
+      setMessage(
+        'gameMessage',
+        `Done. Your result was saved.<br><br><strong>Score:</strong> ${score}/${total}<br><strong>Attempts:</strong> ${state.attempts}<br><strong>Time:</strong> ${duration}s`,
+        'success'
+      );
+    }
+
+    async function loadResults() {
+      try {
+        setMessage('resultsMessage', 'Loading results...', 'warning');
+        const pass = el('resultsPass').value.trim();
+        if (!pass) throw new Error('Enter the teacher password.');
+        if (!state.activityId) throw new Error('Missing activity id.');
+
+        const { data: activity, error: activityError } = await client
+          .from('activities')
+          .select('id, title, teacher_password, created_at')
+          .eq('id', state.activityId)
+          .single();
+
+        if (activityError || !activity) throw new Error('Could not load activity.');
+        if (pass !== activity.teacher_password) throw new Error('Incorrect teacher password.');
+
+        const { data: rows, error: rowsError } = await client
+          .from('submissions')
+          .select('student_name, score, total, attempts, duration_seconds, created_at')
+          .eq('activity_id', state.activityId)
+          .order('created_at', { ascending: false });
+
+        if (rowsError) throw rowsError;
+
+        state.resultsRows = rows || [];
+        el('resultsTitle').textContent = `Results: ${activity.title}`;
+        el('resultsMeta').textContent = `Activity created: ${new Date(activity.created_at).toLocaleString()}`;
+
+        const tbody = el('resultsTable').querySelector('tbody');
+        tbody.innerHTML = state.resultsRows.map(row => `
+          <tr>
+            <td>${escapeHtml(row.student_name)}</td>
+            <td>${row.score}</td>
+            <td>${row.total}</td>
+            <td>${row.attempts}</td>
+            <td>${row.duration_seconds}</td>
+            <td>${new Date(row.created_at).toLocaleString()}</td>
+          </tr>
+        `).join('');
+
+        el('resultsTable').classList.remove('hidden');
+        setMessage('resultsMessage', `${state.resultsRows.length} submission(s) loaded.`, 'success');
+      } catch (err) {
+        el('resultsTable').classList.add('hidden');
+        setMessage('resultsMessage', escapeHtml(err.message || 'Could not load results.'), 'error');
+      }
+    }
+
+    function downloadCsv() {
+      if (!state.resultsRows.length) {
+        setMessage('resultsMessage', 'No results loaded yet.', 'error');
+        return;
+      }
+
+      const lines = [
+        ['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(','),
+        ...state.resultsRows.map(row => [
+          csvSafe(row.student_name),
+          row.score,
+          row.total,
+          row.attempts,
+          row.duration_seconds,
+          csvSafe(new Date(row.created_at).toLocaleString())
+        ].join(','))
+      ];
+
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'match-results.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function csvSafe(value) {
+      const text = String(value ?? '');
+      if (text.includes(',') || text.includes('"') || text.includes('\n')) {
+        return '"' + text.replaceAll('"', '""') + '"';
+      }
+      return text;
+    }
+
+    async function initRoute() {
+      const { view, id } = slugRoute();
+      state.route = view;
+      state.activityId = id || null;
+      renderNav(view, id);
+
+      if (view === 'create') {
+        showOnly('createView');
+        return;
+      }
+
+      if (view === 'play' && id) {
+        showOnly('playView');
+        el('studentGate').classList.remove('hidden');
+        el('gameArea').classList.add('hidden');
+        el('studentName').value = '';
+        resetGameState();
+        await loadActivityForPlay(id);
+        return;
+      }
+
+      if (view === 'results' && id) {
+        showOnly('resultsView');
+        el('resultsTitle').textContent = 'Results';
+        el('resultsMeta').textContent = '';
+        el('resultsTable').classList.add('hidden');
+        setMessage('resultsMessage', '', '');
+        return;
+      }
+
+      showOnly('homeView');
+    }
+
+    initRoute();
+  </script>
+</body>
+</html>
