@@ -145,7 +145,7 @@
       margin-bottom: 16px;
     }
 
-    .topnav a {
+    .topnav a, .inline-link {
       text-decoration: none;
       background: white;
       padding: 11px 16px;
@@ -153,6 +153,7 @@
       color: var(--text);
       font-weight: 700;
       box-shadow: var(--shadow);
+      display: inline-block;
     }
 
     .hero {
@@ -304,7 +305,7 @@
       h1 { font-size: 1.6rem; }
       .card { padding: 16px; }
       button, input, textarea { font-size: 16px; }
-      .topnav a { padding: 10px 14px; }
+      .topnav a, .inline-link { padding: 10px 14px; }
     }
   </style>
 </head>
@@ -326,7 +327,7 @@
         </div>
       </div>
       <div class="row" style="margin-top:14px;">
-        <button onclick="handleLogin()">Log In</button>
+        <button id="loginBtn">Log In</button>
       </div>
       <div id="loginMessage"></div>
     </section>
@@ -335,8 +336,8 @@
       <h1>Teacher Dashboard</h1>
       <p class="muted">Create activities, open student links, and review results.</p>
       <div class="row" style="margin-bottom:14px;">
-        <button onclick="goRoute('create')">Create Activity</button>
-        <button class="secondary" onclick="loadDashboard()">Refresh</button>
+        <button id="createFromDashboardBtn">Create Activity</button>
+        <button class="secondary" id="refreshDashboardBtn">Refresh</button>
       </div>
       <div id="dashboardMessage"></div>
       <div style="overflow-x:auto; margin-top:12px;">
@@ -380,9 +381,9 @@
         </div>
 
         <div class="row" style="margin-top:14px;">
-          <button onclick="createActivity()">Generate Links</button>
-          <button class="secondary" onclick="loadDemo()">Load Demo</button>
-          <button class="secondary" onclick="goRoute('dashboard')">Back to Dashboard</button>
+          <button id="generateLinksBtn">Generate Links</button>
+          <button class="secondary" id="loadDemoBtn">Load Demo</button>
+          <button class="secondary" id="backToDashboardBtn">Back to Dashboard</button>
         </div>
 
         <div id="createMessage"></div>
@@ -399,7 +400,7 @@
           <label for="studentName">Your Name</label>
           <input id="studentName" placeholder="Enter your name" />
           <div style="margin-top:12px;">
-            <button onclick="startGame()">Start</button>
+            <button id="startGameBtn">Start</button>
           </div>
           <div id="studentGateMessage"></div>
         </div>
@@ -434,8 +435,8 @@
         <h1 id="resultsTitle">Results</h1>
         <div id="resultsMeta" class="muted" style="margin:12px 0 10px;"></div>
         <div class="row" style="margin-bottom:12px;">
-          <button class="secondary" onclick="goRoute('dashboard')">Back to Dashboard</button>
-          <button class="secondary" onclick="downloadCsv()">Download CSV</button>
+          <button class="secondary" id="resultsBackBtn">Back to Dashboard</button>
+          <button class="secondary" id="downloadCsvBtn">Download CSV</button>
         </div>
         <div id="resultsMessage"></div>
         <div style="overflow-x:auto; margin-top:12px;">
@@ -464,8 +465,8 @@
       <div class="modal-score" id="finishScore">0/0</div>
       <p id="finishDetails" class="muted"></p>
       <div class="row" style="justify-content:center; margin-top:14px;">
-        <button onclick="closeFinishOverlay()">Close</button>
-        <button class="secondary" onclick="playAgain()">Play Again</button>
+        <button id="closeFinishBtn">Close</button>
+        <button class="secondary" id="playAgainBtn">Play Again</button>
       </div>
     </div>
   </div>
@@ -555,8 +556,7 @@
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
         oscillator.start();
         oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
-      } catch (e) {
-      }
+      } catch (e) {}
     }
 
     function slugRoute() {
@@ -590,23 +590,39 @@
       const loggedIn = isLoggedIn();
       const routeInfo = slugRoute();
       const view = routeInfo.view;
-      const isStudentView = view === 'play';
 
-      if (isStudentView) {
+      if (view === 'play') {
         el('nav').innerHTML = '';
         return;
       }
 
       if (!loggedIn) {
-        el('nav').innerHTML = '<a href="#" onclick="goRoute(\'login\'); return false;">Login</a>';
+        el('nav').innerHTML = '<a href="#" id="navLoginLink">Login</a>';
+        el('nav').querySelector('#navLoginLink').addEventListener('click', function(e) {
+          e.preventDefault();
+          goRoute('login');
+        });
         return;
       }
 
       el('nav').innerHTML = [
-        '<a href="#" onclick="goRoute(\'dashboard\'); return false;">Dashboard</a>',
-        '<a href="#" onclick="goRoute(\'create\'); return false;">Create</a>',
-        '<a href="#" onclick="logout(); return false;">Log Out</a>'
+        '<a href="#" id="navDashboardLink">Dashboard</a>',
+        '<a href="#" id="navCreateLink">Create</a>',
+        '<a href="#" id="navLogoutLink">Log Out</a>'
       ].join('');
+
+      el('nav').querySelector('#navDashboardLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        goRoute('dashboard');
+      });
+      el('nav').querySelector('#navCreateLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        goRoute('create');
+      });
+      el('nav').querySelector('#navLogoutLink').addEventListener('click', function(e) {
+        e.preventDefault();
+        logout();
+      });
     }
 
     function showOnly(idToShow) {
@@ -697,20 +713,30 @@
       const rows = result.data || [];
       const tbody = el('dashboardTable').querySelector('tbody');
       const base = window.location.origin + window.location.pathname;
+      let html = '';
 
-      tbody.innerHTML = rows.map(function(row) {
+      for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
         const studentLink = base + '?view=play&id=' + row.id;
-        return '<tr>' +
+        html += '<tr>' +
           '<td>' + escapeHtml(row.title) + '</td>' +
           '<td>' + new Date(row.created_at).toLocaleString() + '</td>' +
           '<td>' +
             '<div class="action-links">' +
-              '<a href="#" onclick="goRoute(\'results\', \'" + row.id + "\'); return false;">Results</a>' +
-              '<a href="' + studentLink + '" target="_blank">Student Link</a>' +
+              '<a href="#" class="inline-link results-open" data-id="' + row.id + '">Results</a>' +
+              '<a href="' + studentLink + '" target="_blank" class="inline-link">Student Link</a>' +
             '</div>' +
           '</td>' +
         '</tr>';
-      }).join('');
+      }
+
+      tbody.innerHTML = html;
+      Array.from(tbody.querySelectorAll('.results-open')).forEach(function(link) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          goRoute('results', link.dataset.id);
+        });
+      });
 
       el('dashboardTable').classList.remove('hidden');
       setMessage('dashboardMessage', rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.', 'success');
@@ -833,7 +859,7 @@
         if (state.selectedLeft === item.id) classes.push('selected');
         if (state.matchedLeft.has(item.id)) classes.push('correct');
         if (state.wrongFlashLeft === item.id) classes.push('wrong');
-        return '<button class="' + classes.join(' ') + '" onclick="selectLeft(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
+        return '<button class="' + classes.join(' ') + '" data-left-id="' + item.id + '">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
       const rightHtml = state.rightItems.map(function(item) {
@@ -841,13 +867,25 @@
         if (state.selectedRight === item.id) classes.push('selected');
         if (state.matchedRight.has(item.id)) classes.push('correct');
         if (state.wrongFlashRight === item.id) classes.push('wrong');
-        return '<button class="' + classes.join(' ') + '" onclick="selectRight(\'' + item.id + '\')">' + escapeHtml(item.text) + '</button>';
+        return '<button class="' + classes.join(' ') + '" data-right-id="' + item.id + '">' + escapeHtml(item.text) + '</button>';
       }).join('');
 
       el('leftList').innerHTML = leftHtml;
       el('rightList').innerHTML = rightHtml;
       el('matchedCount').textContent = String(state.matchedLeft.size);
       el('attemptCount').textContent = String(state.attempts);
+
+      Array.from(el('leftList').querySelectorAll('[data-left-id]')).forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          selectLeft(btn.dataset.leftId);
+        });
+      });
+
+      Array.from(el('rightList').querySelectorAll('[data-right-id]')).forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          selectRight(btn.dataset.rightId);
+        });
+      });
     }
 
     function selectLeft(id) {
@@ -1024,6 +1062,20 @@
       return text;
     }
 
+    function bindStaticEvents() {
+      el('loginBtn').addEventListener('click', handleLogin);
+      el('createFromDashboardBtn').addEventListener('click', function() { goRoute('create'); });
+      el('refreshDashboardBtn').addEventListener('click', loadDashboard);
+      el('generateLinksBtn').addEventListener('click', createActivity);
+      el('loadDemoBtn').addEventListener('click', loadDemo);
+      el('backToDashboardBtn').addEventListener('click', function() { goRoute('dashboard'); });
+      el('startGameBtn').addEventListener('click', startGame);
+      el('resultsBackBtn').addEventListener('click', function() { goRoute('dashboard'); });
+      el('downloadCsvBtn').addEventListener('click', downloadCsv);
+      el('closeFinishBtn').addEventListener('click', closeFinishOverlay);
+      el('playAgainBtn').addEventListener('click', playAgain);
+    }
+
     async function initRoute() {
       const routeInfo = slugRoute();
       const view = routeInfo.view;
@@ -1068,6 +1120,7 @@
       await loadDashboard();
     }
 
+    bindStaticEvents();
     initRoute();
   </script>
 </body>
