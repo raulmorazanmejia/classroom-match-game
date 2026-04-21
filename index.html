@@ -3,311 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Assignable Match Game</title>
+  <title>Classroom Match Game</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root {
-      --bg: #eef2ff;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --line: #d1d5db;
-      --accent: #4f46e5;
-      --accent2: #4338ca;
-      --good: #059669;
-      --bad: #dc2626;
-      --warn: #d97706;
-      --soft: #e0e7ff;
-      --shadow: 0 14px 34px rgba(79, 70, 229, 0.12);
-      --radius: 22px;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      color: var(--text);
-      background: radial-gradient(circle at top left, #ffffff 0, #eef2ff 35%, #e5e7eb 100%);
-    }
-
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 24px 18px 40px;
-    }
-
-    .card {
-      background: var(--card);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow);
-      padding: 22px;
-      margin-bottom: 18px;
-    }
-
-    h1, h2, h3 { margin-top: 0; }
-    h1 { font-size: 2rem; margin-bottom: 10px; }
-    p { line-height: 1.5; }
-
-    .muted { color: var(--muted); }
-    .hidden { display: none !important; }
-    .row { display: flex; gap: 14px; flex-wrap: wrap; }
-    .col { flex: 1 1 320px; }
-
-    label {
-      display: block;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    input, textarea {
-      width: 100%;
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 13px 14px;
-      font-size: 1rem;
-      background: #fff;
-    }
-
-    textarea {
-      min-height: 240px;
-      resize: vertical;
-      font-family: Consolas, monospace;
-    }
-
-    button {
-      border: none;
-      border-radius: 16px;
-      padding: 13px 18px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 8px 22px rgba(79, 70, 229, 0.2);
-    }
-
-    button:hover { background: var(--accent2); }
-
-    button.secondary {
-      background: #e5e7eb;
-      color: #111827;
-      box-shadow: none;
-    }
-
-    button.secondary:hover { background: #d1d5db; }
-
-    .pill {
-      display: inline-block;
-      background: var(--soft);
-      color: var(--accent2);
-      border-radius: 999px;
-      padding: 7px 12px;
-      font-size: 0.92rem;
-      font-weight: 700;
-    }
-
-    .notice {
-      border-left: 5px solid var(--accent);
-      background: #eef2ff;
-      padding: 12px 14px;
-      border-radius: 14px;
-      margin-top: 12px;
-    }
-
-    .error { border-left-color: var(--bad); background: #fef2f2; color: #7f1d1d; }
-    .success { border-left-color: var(--good); background: #ecfdf5; color: #065f46; }
-    .warning { border-left-color: var(--warn); background: #fffbeb; color: #78350f; }
-
-    .topnav {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-bottom: 16px;
-    }
-
-    .nav-link, .inline-link {
-      text-decoration: none;
-      background: white;
-      padding: 11px 16px;
-      border-radius: 14px;
-      color: var(--text);
-      font-weight: 700;
-      box-shadow: var(--shadow);
-      display: inline-block;
-    }
-
-    .game-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    .option-list { display: grid; gap: 12px; }
-
-    .match-btn {
-      width: 100%;
-      text-align: left;
-      background: white;
-      color: var(--text);
-      border: 2px solid #c7d2fe;
-      border-radius: 18px;
-      padding: 16px;
-      font-weight: 700;
-      min-height: 68px;
-      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.08);
-      transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-    }
-
-    .match-btn:hover {
-      background: #f8faff;
-      transform: scale(1.01);
-    }
-
-    .match-btn.selected {
-      border-color: var(--accent);
-      background: #ddd6fe;
-    }
-
-    .match-btn.correct {
-      border-color: #10b981;
-      background: #d1fae5;
-      color: #065f46;
-      cursor: default;
-    }
-
-    .match-btn.wrong {
-      border-color: #f87171;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .stats {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin: 14px 0;
-    }
-
-    .stat {
-      background: white;
-      border-radius: 14px;
-      padding: 10px 12px;
-      box-shadow: var(--shadow);
-      font-weight: 700;
-    }
-
-    .tool-tag {
-      display: inline-flex;
-      align-items: center;
-      padding: 9px 14px;
-      border-radius: 999px;
-      background: white;
-      box-shadow: var(--shadow);
-      font-weight: 700;
-      margin-right: 8px;
-      margin-bottom: 8px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 14px;
-      overflow: hidden;
-    }
-
-    th, td {
-      text-align: left;
-      padding: 12px;
-      border-bottom: 1px solid #e5e7eb;
-      font-size: 0.95rem;
-      vertical-align: top;
-    }
-
-    th { background: #f9fafb; }
-
-    .action-links {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(17, 24, 39, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      z-index: 999;
-    }
-
-    .modal {
-      width: min(520px, 100%);
-      background: white;
-      border-radius: 22px;
-      padding: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
-      text-align: center;
-    }
-
-    .modal-score {
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--accent2);
-      margin: 10px 0 16px;
-    }
-
-    @media (max-width: 720px) {
-      .wrap { padding: 14px; }
-      .game-grid { grid-template-columns: 1fr; }
-      h1 { font-size: 1.6rem; }
-      .card { padding: 16px; }
-      button, input, textarea { font-size: 16px; }
-    }
-  </style>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="wrap">
-    <div class="topnav" id="nav"></div>
+  <div class="app-bg"></div>
+  <main class="wrap">
+    <header class="hero card">
+      <p class="eyebrow">Wordwall-Style Classroom Activity</p>
+      <h1>Classroom Match Game</h1>
+      <p class="muted">Fast teacher setup, smooth student play, and Supabase-backed results.</p>
+      <nav class="topnav" id="nav"></nav>
+    </header>
 
     <section id="loginView" class="card hidden">
-      <h1>Teacher Login</h1>
-      <p class="muted">Log in once, then create activities and review results.</p>
+      <h2>Teacher Login</h2>
+      <p class="muted">Use your global teacher password to manage all activities.</p>
       <div class="row">
         <div class="col">
           <label for="loginName">Teacher Name</label>
-          <input id="loginName" placeholder="Your name">
+          <input id="loginName" placeholder="Your name" />
         </div>
         <div class="col">
           <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" placeholder="Teacher password">
+          <input id="loginPassword" type="password" placeholder="Teacher password" />
         </div>
       </div>
-      <div class="row" style="margin-top:14px">
+      <div class="row mt-12">
         <button id="loginBtn">Log In</button>
       </div>
       <div id="loginMessage"></div>
     </section>
 
     <section id="dashboardView" class="card hidden">
-      <h1>Teacher Dashboard</h1>
-      <p class="muted">Create activities, open student links, and review results.</p>
-      <div class="row" style="margin-bottom:14px">
+      <h2>Teacher Dashboard</h2>
+      <p class="muted">Create, duplicate, and manage activities. Share student links instantly.</p>
+      <div class="row mb-14">
         <button id="createFromDashboardBtn">Create Activity</button>
         <button class="secondary" id="refreshDashboardBtn">Refresh</button>
       </div>
       <div id="dashboardMessage"></div>
-      <div style="overflow-x:auto;margin-top:12px">
+      <div class="table-wrap">
         <table id="dashboardTable" class="hidden">
           <thead>
             <tr>
               <th>Activity</th>
               <th>Created</th>
-              <th>Links</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -316,27 +59,27 @@
     </section>
 
     <section id="createView" class="card hidden">
-      <h1>Create Match Activity</h1>
-      <p class="muted">Format each line like this: left item, right item or left item | right item</p>
+      <h2>Create Match Activity</h2>
+      <p class="muted">Format each line as <strong>left, right</strong> or <strong>left | right</strong>.</p>
       <div class="row">
         <div class="col">
-          <label for="teacherName">Teacher/Admin Name</label>
-          <input id="teacherName" placeholder="Your name">
+          <label for="teacherName">Teacher Name</label>
+          <input id="teacherName" placeholder="Your name" />
         </div>
         <div class="col">
           <label for="activityTitle">Activity Title</label>
-          <input id="activityTitle" placeholder="Passive Voice Match Practice">
+          <input id="activityTitle" placeholder="Passive Voice Match Practice" />
         </div>
       </div>
       <label for="pairsInput">Pairs</label>
       <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
-      <div style="margin-top:14px">
-        <span class="tool-tag">Mobile-friendly</span>
-        <span class="tool-tag">Tap-to-match</span>
-        <span class="tool-tag">Stores student results</span>
-        <span class="tool-tag">One global teacher password</span>
+      <div class="chip-row mt-12">
+        <span class="chip">Mobile-friendly</span>
+        <span class="chip">Tap-to-match</span>
+        <span class="chip">Supabase result storage</span>
+        <span class="chip">Global teacher password</span>
       </div>
-      <div class="row" style="margin-top:14px">
+      <div class="row mt-14">
         <button id="generateLinksBtn">Generate Links</button>
         <button class="secondary" id="loadDemoBtn">Load Demo</button>
         <button class="secondary" id="backToDashboardBtn">Back to Dashboard</button>
@@ -345,26 +88,29 @@
     </section>
 
     <section id="playView" class="card hidden">
-      <div class="pill">Student Activity</div>
-      <h1 id="playTitle">Match Activity</h1>
-      <p class="muted">Match the items. When you finish, your result will be saved automatically.</p>
+      <span class="pill">Student Activity</span>
+      <h2 id="playTitle">Match Activity</h2>
+      <p class="muted">Match all items. Results save automatically when complete.</p>
+
       <div id="studentGate">
         <label for="studentName">Your Name</label>
-        <input id="studentName" placeholder="Enter your name">
-        <div style="margin-top:12px">
-          <button id="startGameBtn">Start</button>
+        <input id="studentName" placeholder="Enter your name" />
+        <div class="row mt-12">
+          <button id="startGameBtn">Start Game</button>
         </div>
         <div id="studentGateMessage"></div>
       </div>
+
       <div id="gameArea" class="hidden">
+        <div class="progress-wrap" aria-label="Progress">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
         <div class="stats">
           <div class="stat">Matched: <span id="matchedCount">0</span></div>
           <div class="stat">Attempts: <span id="attemptCount">0</span></div>
           <div class="stat">Time: <span id="timer">0</span>s</div>
         </div>
-        <div class="notice warning" style="margin-bottom:14px">
-          Tap one item on the left and one item on the right. Correct pairs stay locked.
-        </div>
+        <div class="notice warning mb-14">Tap one item on the left and one item on the right. Correct pairs lock in place.</div>
         <div class="game-grid">
           <div>
             <h3>Left</h3>
@@ -380,15 +126,15 @@
     </section>
 
     <section id="resultsView" class="card hidden">
-      <div class="pill">Teacher Results</div>
-      <h1 id="resultsTitle">Results</h1>
-      <div id="resultsMeta" class="muted" style="margin:12px 0 10px"></div>
-      <div class="row" style="margin-bottom:12px">
+      <span class="pill">Teacher Results</span>
+      <h2 id="resultsTitle">Results</h2>
+      <p id="resultsMeta" class="muted"></p>
+      <div class="row mb-12">
         <button class="secondary" id="resultsBackBtn">Back to Dashboard</button>
         <button class="secondary" id="downloadCsvBtn">Download CSV</button>
       </div>
       <div id="resultsMessage"></div>
-      <div style="overflow-x:auto;margin-top:12px">
+      <div class="table-wrap">
         <table id="resultsTable" class="hidden">
           <thead>
             <tr>
@@ -404,771 +150,23 @@
         </table>
       </div>
     </section>
-  </div>
+  </main>
 
   <div id="finishOverlay" class="overlay hidden">
     <div class="modal">
-      <div class="pill" style="margin-bottom:10px">Nice work</div>
-      <h2>Finished</h2>
-      <div class="modal-score" id="finishScore">0/0</div>
+      <span class="pill">Great work</span>
+      <h3>Activity Complete</h3>
+      <p class="modal-score" id="finishScore">0/0</p>
       <p id="finishDetails" class="muted"></p>
-      <div class="row" style="justify-content:center;margin-top:14px">
+      <div class="row center mt-14">
         <button id="closeFinishBtn">Close</button>
         <button class="secondary" id="playAgainBtn">Play Again</button>
       </div>
     </div>
   </div>
 
-  <script>
-    const SUPABASE_URL = 'https://cpouyxzsnmoiskxhrcut.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra';
-    const GLOBAL_TEACHER_PASSWORD = 'intel123';
-    const BASE_URL = 'https://classroom-match-game.vercel.app';
-
-    const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
-    const CURRENT_URL = new URL(window.location.href);
-    const BASE_URL_OBJ = new URL(BASE_URL);
-    const IS_LOCAL = LOCAL_HOSTS.includes(window.location.hostname);
-    const IS_PRODUCTION_HOST = window.location.origin === BASE_URL_OBJ.origin;
-
-    if (!IS_LOCAL && !IS_PRODUCTION_HOST) {
-      const redirectUrl = BASE_URL_OBJ.origin + BASE_URL_OBJ.pathname + window.location.search + window.location.hash;
-      window.location.replace(redirectUrl);
-    }
-
-    const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    const state = {
-      activityId: null,
-      activity: null,
-      studentName: '',
-      leftItems: [],
-      rightItems: [],
-      selectedLeft: null,
-      selectedRight: null,
-      matchedLeft: new Set(),
-      matchedRight: new Set(),
-      attempts: 0,
-      startTs: null,
-      timerInt: null,
-      resultsRows: [],
-      wrongFlashLeft: null,
-      wrongFlashRight: null
-    };
-
-    function el(id) {
-      return document.getElementById(id);
-    }
-
-    function isLoggedIn() {
-      return sessionStorage.getItem('teacherLoggedIn') === '1';
-    }
-
-    function setLoggedIn(name) {
-      sessionStorage.setItem('teacherLoggedIn', '1');
-      sessionStorage.setItem('teacherName', name || 'Teacher');
-    }
-
-    function clearLogin() {
-      sessionStorage.removeItem('teacherLoggedIn');
-      sessionStorage.removeItem('teacherName');
-    }
-
-    function escapeHtml(str) {
-      return String(str)
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#039;');
-    }
-
-    function setMessage(id, html, kind) {
-      const klass = kind ? 'notice ' + kind : '';
-      el(id).innerHTML = html ? '<div class="' + klass + '">' + html + '</div>' : '';
-    }
-
-    function shuffle(arr) {
-      const copy = arr.slice();
-      for (let i = copy.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        const tmp = copy[i];
-        copy[i] = copy[j];
-        copy[j] = tmp;
-      }
-      return copy;
-    }
-
-    function playTone(kind) {
-      try {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContextClass) return;
-        const audioCtx = new AudioContextClass();
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        oscillator.type = 'sine';
-        oscillator.frequency.value = kind === 'correct' ? 660 : 220;
-        gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
-        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
-      } catch (e) {}
-    }
-
-    function appUrlFor(view, id) {
-      const url = new URL(BASE_URL);
-      url.searchParams.set('view', view);
-      if (id) url.searchParams.set('id', id);
-      return url.toString();
-    }
-
-    function slugRoute() {
-      const url = new URL(window.location.href);
-      return {
-        view: url.searchParams.get('view') || '',
-        id: url.searchParams.get('id')
-      };
-    }
-
-    function goRoute(view, id) {
-      const target = appUrlFor(view, id);
-
-      if (IS_LOCAL) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('view', view);
-        if (id) url.searchParams.set('id', id);
-        else url.searchParams.delete('id');
-        history.pushState({}, '', url);
-        initRoute();
-        return;
-      }
-
-      if (window.location.href !== target) {
-        window.location.assign(target);
-      } else {
-        initRoute();
-      }
-    }
-
-    function logout() {
-      clearLogin();
-      goRoute('login');
-    }
-
-    window.addEventListener('popstate', initRoute);
-
-    function createNavLink(text, handler) {
-      const a = document.createElement('a');
-      a.href = '#';
-      a.textContent = text;
-      a.className = 'nav-link';
-      a.addEventListener('click', function(evt) {
-        evt.preventDefault();
-        handler();
-      });
-      return a;
-    }
-
-    function renderNav() {
-      const nav = el('nav');
-      nav.innerHTML = '';
-      const view = slugRoute().view;
-
-      if (view === 'play') return;
-
-      if (!isLoggedIn()) {
-        nav.appendChild(createNavLink('Login', function() {
-          goRoute('login');
-        }));
-        return;
-      }
-
-      nav.appendChild(createNavLink('Dashboard', function() {
-        goRoute('dashboard');
-      }));
-      nav.appendChild(createNavLink('Create', function() {
-        goRoute('create');
-      }));
-      nav.appendChild(createNavLink('Log Out', function() {
-        logout();
-      }));
-    }
-
-    function showOnly(idToShow) {
-      ['loginView', 'dashboardView', 'createView', 'playView', 'resultsView'].forEach(function(sectionId) {
-        el(sectionId).classList.add('hidden');
-      });
-      el(idToShow).classList.remove('hidden');
-    }
-
-    function loadDemo() {
-      const savedName = sessionStorage.getItem('teacherName') || 'Raul';
-      el('teacherName').value = savedName;
-      el('activityTitle').value = 'Passive Voice Match';
-      el('pairsInput').value = [
-        'destroyed, was destroyed by the tornado',
-        'stolen | was stolen last night',
-        'repaired, is being repaired now',
-        'painted, was painted by students',
-        'broken, was broken by the wind'
-      ].join('\n');
-    }
-
-    function parsePairs(text) {
-      const lines = text
-        .split(/\r?\n/)
-        .map(function(line) {
-          return line.trim();
-        })
-        .filter(Boolean);
-
-      const parsed = [];
-
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        let separator = null;
-
-        if (line.indexOf('|') !== -1) separator = '|';
-        else if (line.indexOf(',') !== -1) separator = ',';
-        else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
-
-        const parts = line.split(separator);
-        const left = (parts[0] || '').trim();
-        const right = parts.slice(1).join(separator).trim();
-
-        if (!left || !right) {
-          throw new Error('Both sides must contain text: ' + line);
-        }
-
-        parsed.push({ left: left, right: right });
-      }
-
-      if (parsed.length < 2) {
-        throw new Error('Please add at least 2 pairs.');
-      }
-
-      return parsed;
-    }
-
-    function handleLogin() {
-      const name = el('loginName').value.trim();
-      const pass = el('loginPassword').value.trim();
-
-      if (!name) {
-        setMessage('loginMessage', 'Enter your name.', 'error');
-        return;
-      }
-
-      if (pass !== GLOBAL_TEACHER_PASSWORD) {
-        setMessage('loginMessage', 'Incorrect password.', 'error');
-        return;
-      }
-
-      setLoggedIn(name);
-      setMessage('loginMessage', '', '');
-      goRoute('dashboard');
-    }
-
-    function buildInlineLink(text, href) {
-      const a = document.createElement('a');
-      a.textContent = text;
-      a.href = href || '#';
-      a.className = 'inline-link';
-      return a;
-    }
-
-    async function loadDashboard() {
-      if (!isLoggedIn()) {
-        goRoute('login');
-        return;
-      }
-
-      setMessage('dashboardMessage', 'Loading activities...', 'warning');
-
-      const result = await client
-        .from('activities')
-        .select('id, title, created_at')
-        .order('created_at', { ascending: false });
-
-      if (result.error) {
-        setMessage('dashboardMessage', escapeHtml(result.error.message || 'Could not load activities.'), 'error');
-        el('dashboardTable').classList.add('hidden');
-        return;
-      }
-
-      const rows = result.data || [];
-      const tbody = el('dashboardTable').querySelector('tbody');
-      tbody.innerHTML = '';
-
-      rows.forEach(function(row) {
-        const tr = document.createElement('tr');
-
-        const tdTitle = document.createElement('td');
-        tdTitle.textContent = row.title;
-
-        const tdCreated = document.createElement('td');
-        tdCreated.textContent = new Date(row.created_at).toLocaleString();
-
-        const tdLinks = document.createElement('td');
-        const actions = document.createElement('div');
-        actions.className = 'action-links';
-
-        const resultsLink = buildInlineLink('Results', appUrlFor('results', row.id));
-        if (!IS_LOCAL) {
-          resultsLink.addEventListener('click', function(evt) {
-            evt.preventDefault();
-            goRoute('results', row.id);
-          });
-        }
-
-        const studentLink = buildInlineLink('Student Link', appUrlFor('play', row.id));
-        studentLink.target = '_blank';
-        studentLink.rel = 'noopener noreferrer';
-
-        actions.appendChild(resultsLink);
-        actions.appendChild(studentLink);
-        tdLinks.appendChild(actions);
-
-        tr.appendChild(tdTitle);
-        tr.appendChild(tdCreated);
-        tr.appendChild(tdLinks);
-
-        tbody.appendChild(tr);
-      });
-
-      el('dashboardTable').classList.remove('hidden');
-      setMessage(
-        'dashboardMessage',
-        rows.length + ' activit' + (rows.length === 1 ? 'y' : 'ies') + ' loaded.',
-        'success'
-      );
-    }
-
-    async function createActivity() {
-      try {
-        setMessage('createMessage', 'Saving activity...', 'warning');
-
-        const teacherName = el('teacherName').value.trim();
-        const title = el('activityTitle').value.trim();
-        const pairsRaw = el('pairsInput').value;
-
-        if (!teacherName) throw new Error('Enter your name.');
-        if (!title) throw new Error('Enter an activity title.');
-
-        const pairs = parsePairs(pairsRaw);
-
-        const result = await client
-          .from('activities')
-          .insert([
-            {
-              title: title,
-              teacher_name: teacherName,
-              teacher_password: GLOBAL_TEACHER_PASSWORD,
-              pairs: pairs
-            }
-          ])
-          .select()
-          .single();
-
-        if (result.error) throw result.error;
-
-        const activity = result.data;
-        const studentLink = appUrlFor('play', activity.id);
-        const resultsLink = appUrlFor('results', activity.id);
-
-        setMessage(
-          'createMessage',
-          'Activity created.<br><br>' +
-            '<strong>Student Link:</strong><br>' +
-            '<a href="' + studentLink + '" target="_blank" rel="noopener noreferrer">' + studentLink + '</a><br><br>' +
-            '<strong>Results Link:</strong><br>' +
-            '<a href="' + resultsLink + '" target="_blank" rel="noopener noreferrer">' + resultsLink + '</a>',
-          'success'
-        );
-      } catch (err) {
-        setMessage('createMessage', escapeHtml(err.message || 'Could not create activity.'), 'error');
-      }
-    }
-
-    async function loadActivityForPlay(id) {
-      setMessage('studentGateMessage', 'Loading activity...', 'warning');
-
-      const result = await client
-        .from('activities')
-        .select('id, title, pairs')
-        .eq('id', id)
-        .single();
-
-      if (result.error || !result.data) {
-        el('playTitle').textContent = 'Activity not found';
-        setMessage('studentGateMessage', 'Could not load this activity.', 'error');
-        return;
-      }
-
-      state.activity = result.data;
-      state.activityId = result.data.id;
-      el('playTitle').textContent = result.data.title;
-      setMessage('studentGateMessage', '', '');
-    }
-
-    function resetGameState() {
-      state.leftItems = [];
-      state.rightItems = [];
-      state.selectedLeft = null;
-      state.selectedRight = null;
-      state.matchedLeft = new Set();
-      state.matchedRight = new Set();
-      state.attempts = 0;
-      state.startTs = null;
-      state.wrongFlashLeft = null;
-      state.wrongFlashRight = null;
-
-      if (state.timerInt) clearInterval(state.timerInt);
-      state.timerInt = null;
-
-      el('matchedCount').textContent = '0';
-      el('attemptCount').textContent = '0';
-      el('timer').textContent = '0';
-      setMessage('gameMessage', '', '');
-    }
-
-    function startGame() {
-      const studentName = el('studentName').value.trim();
-
-      if (!studentName) {
-        setMessage('studentGateMessage', 'Please enter your name.', 'error');
-        return;
-      }
-
-      if (!state.activity || !state.activity.pairs) {
-        setMessage('studentGateMessage', 'This activity is not loaded correctly.', 'error');
-        return;
-      }
-
-      state.studentName = studentName;
-      resetGameState();
-
-      el('studentGate').classList.add('hidden');
-      el('gameArea').classList.remove('hidden');
-
-      state.leftItems = shuffle(
-        state.activity.pairs.map(function(pair, index) {
-          return { id: 'L' + index, pairId: index, text: pair.left };
-        })
-      );
-
-      state.rightItems = shuffle(
-        state.activity.pairs.map(function(pair, index) {
-          return { id: 'R' + index, pairId: index, text: pair.right };
-        })
-      );
-
-      state.startTs = Date.now();
-      state.timerInt = setInterval(function() {
-        el('timer').textContent = String(Math.floor((Date.now() - state.startTs) / 1000));
-      }, 1000);
-
-      renderGame();
-    }
-
-    function renderGame() {
-      const leftList = el('leftList');
-      const rightList = el('rightList');
-      leftList.innerHTML = '';
-      rightList.innerHTML = '';
-
-      state.leftItems.forEach(function(item) {
-        const btn = document.createElement('button');
-        btn.className = 'match-btn';
-        if (state.selectedLeft === item.id) btn.classList.add('selected');
-        if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
-        if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
-        btn.textContent = item.text;
-        btn.addEventListener('click', function() {
-          selectLeft(item.id);
-        });
-        leftList.appendChild(btn);
-      });
-
-      state.rightItems.forEach(function(item) {
-        const btn = document.createElement('button');
-        btn.className = 'match-btn';
-        if (state.selectedRight === item.id) btn.classList.add('selected');
-        if (state.matchedRight.has(item.id)) btn.classList.add('correct');
-        if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
-        btn.textContent = item.text;
-        btn.addEventListener('click', function() {
-          selectRight(item.id);
-        });
-        rightList.appendChild(btn);
-      });
-
-      el('matchedCount').textContent = String(state.matchedLeft.size);
-      el('attemptCount').textContent = String(state.attempts);
-    }
-
-    function selectLeft(id) {
-      if (state.matchedLeft.has(id)) return;
-      state.selectedLeft = id;
-      renderGame();
-      maybeCheckMatch();
-    }
-
-    function selectRight(id) {
-      if (state.matchedRight.has(id)) return;
-      state.selectedRight = id;
-      renderGame();
-      maybeCheckMatch();
-    }
-
-    function clearWrongFlashSoon() {
-      setTimeout(function() {
-        state.wrongFlashLeft = null;
-        state.wrongFlashRight = null;
-        renderGame();
-      }, 500);
-    }
-
-    function maybeCheckMatch() {
-      if (!state.selectedLeft || !state.selectedRight) return;
-
-      const left = state.leftItems.find(function(item) {
-        return item.id === state.selectedLeft;
-      });
-
-      const right = state.rightItems.find(function(item) {
-        return item.id === state.selectedRight;
-      });
-
-      state.attempts += 1;
-
-      if (left.pairId === right.pairId) {
-        state.matchedLeft.add(left.id);
-        state.matchedRight.add(right.id);
-        state.wrongFlashLeft = null;
-        state.wrongFlashRight = null;
-        setMessage('gameMessage', 'Nice! Correct match.', 'success');
-        playTone('correct');
-      } else {
-        state.wrongFlashLeft = left.id;
-        state.wrongFlashRight = right.id;
-        setMessage('gameMessage', 'Try again.', 'error');
-        playTone('wrong');
-        clearWrongFlashSoon();
-      }
-
-      state.selectedLeft = null;
-      state.selectedRight = null;
-      renderGame();
-
-      if (state.matchedLeft.size === state.leftItems.length) {
-        finishGame();
-      }
-    }
-
-    async function finishGame() {
-      if (state.timerInt) clearInterval(state.timerInt);
-
-      const duration = Math.floor((Date.now() - state.startTs) / 1000);
-      const total = state.leftItems.length;
-      const score = total;
-
-      setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
-
-      const result = await client.from('submissions').insert([
-        {
-          activity_id: state.activityId,
-          student_name: state.studentName,
-          score: score,
-          total: total,
-          attempts: state.attempts,
-          duration_seconds: duration
-        }
-      ]);
-
-      if (result.error) {
-        setMessage('gameMessage', 'You finished, but the result could not be saved.', 'error');
-        return;
-      }
-
-      setMessage('gameMessage', 'Done. Your result was saved.', 'success');
-      el('finishScore').textContent = score + '/' + total;
-      el('finishDetails').innerHTML =
-        'Attempts: <strong>' + state.attempts + '</strong> | Time: <strong>' + duration + 's</strong>';
-      el('finishOverlay').classList.remove('hidden');
-    }
-
-    function closeFinishOverlay() {
-      el('finishOverlay').classList.add('hidden');
-    }
-
-    function playAgain() {
-      closeFinishOverlay();
-      el('studentGate').classList.remove('hidden');
-      el('gameArea').classList.add('hidden');
-      el('studentName').value = state.studentName;
-      resetGameState();
-    }
-
-    async function loadResults() {
-      try {
-        setMessage('resultsMessage', 'Loading results...', 'warning');
-
-        if (!state.activityId) throw new Error('Missing activity id.');
-
-        const activityResult = await client
-          .from('activities')
-          .select('id, title, created_at')
-          .eq('id', state.activityId)
-          .single();
-
-        if (activityResult.error || !activityResult.data) {
-          throw new Error('Could not load activity.');
-        }
-
-        const rowsResult = await client
-          .from('submissions')
-          .select('student_name, score, total, attempts, duration_seconds, created_at')
-          .eq('activity_id', state.activityId)
-          .order('created_at', { ascending: false });
-
-        if (rowsResult.error) throw rowsResult.error;
-
-        state.resultsRows = rowsResult.data || [];
-        el('resultsTitle').textContent = 'Results: ' + activityResult.data.title;
-        el('resultsMeta').textContent =
-          'Activity created: ' + new Date(activityResult.data.created_at).toLocaleString();
-
-        const tbody = el('resultsTable').querySelector('tbody');
-        tbody.innerHTML = '';
-
-        state.resultsRows.forEach(function(row) {
-          const tr = document.createElement('tr');
-          const values = [
-            row.student_name,
-            row.score,
-            row.total,
-            row.attempts,
-            row.duration_seconds,
-            new Date(row.created_at).toLocaleString()
-          ];
-
-          values.forEach(function(value) {
-            const td = document.createElement('td');
-            td.textContent = String(value);
-            tr.appendChild(td);
-          });
-
-          tbody.appendChild(tr);
-        });
-
-        el('resultsTable').classList.remove('hidden');
-        setMessage('resultsMessage', state.resultsRows.length + ' submission(s) loaded.', 'success');
-      } catch (err) {
-        el('resultsTable').classList.add('hidden');
-        setMessage('resultsMessage', escapeHtml(err.message || 'Could not load results.'), 'error');
-      }
-    }
-
-    function downloadCsv() {
-      if (!state.resultsRows.length) {
-        setMessage('resultsMessage', 'No results loaded yet.', 'error');
-        return;
-      }
-
-      const lines = [['Name','Score','Total','Attempts','DurationSeconds','CompletedAt'].join(',')];
-
-      state.resultsRows.forEach(function(row) {
-        lines.push([
-          csvSafe(row.student_name),
-          row.score,
-          row.total,
-          row.attempts,
-          row.duration_seconds,
-          csvSafe(new Date(row.created_at).toLocaleString())
-        ].join(','));
-      });
-
-      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'match-results.csv';
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-
-    function csvSafe(value) {
-      const text = String(value || '');
-      if (text.indexOf(',') !== -1 || text.indexOf('"') !== -1 || text.indexOf('\n') !== -1) {
-        return '"' + text.replaceAll('"', '""') + '"';
-      }
-      return text;
-    }
-
-    function bindStaticEvents() {
-      el('loginBtn').addEventListener('click', handleLogin);
-      el('createFromDashboardBtn').addEventListener('click', function() { goRoute('create'); });
-      el('refreshDashboardBtn').addEventListener('click', loadDashboard);
-      el('generateLinksBtn').addEventListener('click', createActivity);
-      el('loadDemoBtn').addEventListener('click', loadDemo);
-      el('backToDashboardBtn').addEventListener('click', function() { goRoute('dashboard'); });
-      el('startGameBtn').addEventListener('click', startGame);
-      el('resultsBackBtn').addEventListener('click', function() { goRoute('dashboard'); });
-      el('downloadCsvBtn').addEventListener('click', downloadCsv);
-      el('closeFinishBtn').addEventListener('click', closeFinishOverlay);
-      el('playAgainBtn').addEventListener('click', playAgain);
-    }
-
-    async function initRoute() {
-      const routeInfo = slugRoute();
-      const view = routeInfo.view;
-      const id = routeInfo.id;
-
-      state.activityId = id || null;
-      renderNav();
-
-      if (view === 'play' && id) {
-        showOnly('playView');
-        closeFinishOverlay();
-        el('studentGate').classList.remove('hidden');
-        el('gameArea').classList.add('hidden');
-        el('studentName').value = '';
-        resetGameState();
-        await loadActivityForPlay(id);
-        return;
-      }
-
-      if (!isLoggedIn()) {
-        showOnly('loginView');
-        return;
-      }
-
-      if (view === 'create') {
-        showOnly('createView');
-        el('teacherName').value = sessionStorage.getItem('teacherName') || '';
-        return;
-      }
-
-      if (view === 'results' && id) {
-        showOnly('resultsView');
-        el('resultsTitle').textContent = 'Results';
-        el('resultsMeta').textContent = '';
-        el('resultsTable').classList.add('hidden');
-        setMessage('resultsMessage', '', '');
-        await loadResults();
-        return;
-      }
-
-      showOnly('dashboardView');
-      await loadDashboard();
-    }
-
-    bindStaticEvents();
-    initRoute();
-  </script>
+  <script src="app.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="game.js"></script>
 </body>
 </html>
