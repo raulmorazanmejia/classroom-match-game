@@ -425,6 +425,17 @@
     const GLOBAL_TEACHER_PASSWORD = 'intel123';
     const BASE_URL = 'https://classroom-match-game.vercel.app';
 
+    const LOCAL_HOSTS = ['localhost', '127.0.0.1'];
+    const CURRENT_URL = new URL(window.location.href);
+    const BASE_URL_OBJ = new URL(BASE_URL);
+    const IS_LOCAL = LOCAL_HOSTS.includes(window.location.hostname);
+    const IS_PRODUCTION_HOST = window.location.origin === BASE_URL_OBJ.origin;
+
+    if (!IS_LOCAL && !IS_PRODUCTION_HOST) {
+      const redirectUrl = BASE_URL_OBJ.origin + BASE_URL_OBJ.pathname + window.location.search + window.location.hash;
+      window.location.replace(redirectUrl);
+    }
+
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const state = {
@@ -507,6 +518,13 @@
       } catch (e) {}
     }
 
+    function appUrlFor(view, id) {
+      const url = new URL(BASE_URL);
+      url.searchParams.set('view', view);
+      if (id) url.searchParams.set('id', id);
+      return url.toString();
+    }
+
     function slugRoute() {
       const url = new URL(window.location.href);
       return {
@@ -516,15 +534,23 @@
     }
 
     function goRoute(view, id) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('view', view);
-      if (id) {
-        url.searchParams.set('id', id);
-      } else {
-        url.searchParams.delete('id');
+      const target = appUrlFor(view, id);
+
+      if (IS_LOCAL) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('view', view);
+        if (id) url.searchParams.set('id', id);
+        else url.searchParams.delete('id');
+        history.pushState({}, '', url);
+        initRoute();
+        return;
       }
-      history.pushState({}, '', url);
-      initRoute();
+
+      if (window.location.href !== target) {
+        window.location.assign(target);
+      } else {
+        initRoute();
+      }
     }
 
     function logout() {
@@ -690,13 +716,15 @@
         const actions = document.createElement('div');
         actions.className = 'action-links';
 
-        const resultsLink = buildInlineLink('Results', '#');
-        resultsLink.addEventListener('click', function(evt) {
-          evt.preventDefault();
-          goRoute('results', row.id);
-        });
+        const resultsLink = buildInlineLink('Results', appUrlFor('results', row.id));
+        if (!IS_LOCAL) {
+          resultsLink.addEventListener('click', function(evt) {
+            evt.preventDefault();
+            goRoute('results', row.id);
+          });
+        }
 
-        const studentLink = buildInlineLink('Student Link', BASE_URL + '/?view=play&id=' + row.id);
+        const studentLink = buildInlineLink('Student Link', appUrlFor('play', row.id));
         studentLink.target = '_blank';
         studentLink.rel = 'noopener noreferrer';
 
@@ -748,8 +776,8 @@
         if (result.error) throw result.error;
 
         const activity = result.data;
-        const studentLink = BASE_URL + '/?view=play&id=' + activity.id;
-        const resultsLink = BASE_URL + '/?view=results&id=' + activity.id;
+        const studentLink = appUrlFor('play', activity.id);
+        const resultsLink = appUrlFor('results', activity.id);
 
         setMessage(
           'createMessage',
