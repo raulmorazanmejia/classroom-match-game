@@ -55,6 +55,9 @@ function resetGameState() {
   state.startTs = null;
   state.wrongFlashLeft = null;
   state.wrongFlashRight = null;
+  state.lastMatchedLeft = null;
+  state.lastMatchedRight = null;
+  state.matchedPairOrder = new Map();
 
   if (state.timerInt) clearInterval(state.timerInt);
   state.timerInt = null;
@@ -63,6 +66,7 @@ function resetGameState() {
   el('attemptCount').textContent = '0';
   el('timer').textContent = '0';
   el('progressBar').style.width = '0%';
+  el('progressText').textContent = '0 / 0 matched';
   setMessage('gameMessage', '', '');
 }
 
@@ -100,7 +104,14 @@ function renderGame() {
     if (state.selectedLeft === item.id) btn.classList.add('selected');
     if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
+    if (state.lastMatchedLeft === item.id) btn.classList.add('matched-pop');
     btn.textContent = item.text;
+    if (state.matchedLeft.has(item.id)) {
+      const pairTag = document.createElement('span');
+      pairTag.className = 'pair-tag';
+      pairTag.textContent = '#' + state.matchedPairOrder.get(item.pairId);
+      btn.appendChild(pairTag);
+    }
     btn.addEventListener('click', function () { selectLeft(item.id); });
     leftList.appendChild(btn);
   });
@@ -111,13 +122,21 @@ function renderGame() {
     if (state.selectedRight === item.id) btn.classList.add('selected');
     if (state.matchedRight.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
+    if (state.lastMatchedRight === item.id) btn.classList.add('matched-pop');
     btn.textContent = item.text;
+    if (state.matchedRight.has(item.id)) {
+      const pairTag = document.createElement('span');
+      pairTag.className = 'pair-tag';
+      pairTag.textContent = '#' + state.matchedPairOrder.get(item.pairId);
+      btn.appendChild(pairTag);
+    }
     btn.addEventListener('click', function () { selectRight(item.id); });
     rightList.appendChild(btn);
   });
 
   el('matchedCount').textContent = String(state.matchedLeft.size);
   el('attemptCount').textContent = String(state.attempts);
+  el('progressText').textContent = state.matchedLeft.size + ' / ' + state.leftItems.length + ' matched';
   const progress = state.leftItems.length ? Math.round((state.matchedLeft.size / state.leftItems.length) * 100) : 0;
   el('progressBar').style.width = progress + '%';
 }
@@ -144,6 +163,14 @@ function clearWrongFlashSoon() {
   }, 420);
 }
 
+function clearMatchPopSoon() {
+  setTimeout(function () {
+    state.lastMatchedLeft = null;
+    state.lastMatchedRight = null;
+    renderGame();
+  }, 320);
+}
+
 function maybeCheckMatch() {
   if (!state.selectedLeft || !state.selectedRight) return;
   const left = state.leftItems.find(function (item) { return item.id === state.selectedLeft; });
@@ -152,15 +179,22 @@ function maybeCheckMatch() {
   state.attempts += 1;
 
   if (left.pairId === right.pairId) {
+    const matchNumber = state.matchedPairOrder.size + 1;
+    state.matchedPairOrder.set(left.pairId, matchNumber);
     state.matchedLeft.add(left.id);
     state.matchedRight.add(right.id);
     state.wrongFlashLeft = null;
     state.wrongFlashRight = null;
+    state.lastMatchedLeft = left.id;
+    state.lastMatchedRight = right.id;
     setMessage('gameMessage', '✅ Correct match!', 'success');
     playTone('correct');
+    clearMatchPopSoon();
   } else {
     state.wrongFlashLeft = left.id;
     state.wrongFlashRight = right.id;
+    state.lastMatchedLeft = null;
+    state.lastMatchedRight = null;
     setMessage('gameMessage', '❌ Not a match. Try again.', 'error');
     playTone('wrong');
     clearWrongFlashSoon();
