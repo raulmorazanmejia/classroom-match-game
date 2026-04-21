@@ -101,6 +101,8 @@ function renderGame() {
   state.leftItems.forEach(function (item) {
     const btn = document.createElement('button');
     btn.className = 'match-btn';
+    btn.dataset.pairId = String(item.pairId);
+    btn.dataset.side = 'left';
     if (state.selectedLeft === item.id) btn.classList.add('selected');
     if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
@@ -119,6 +121,8 @@ function renderGame() {
   state.rightItems.forEach(function (item) {
     const btn = document.createElement('button');
     btn.className = 'match-btn';
+    btn.dataset.pairId = String(item.pairId);
+    btn.dataset.side = 'right';
     if (state.selectedRight === item.id) btn.classList.add('selected');
     if (state.matchedRight.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
@@ -136,9 +140,47 @@ function renderGame() {
 
   el('matchedCount').textContent = String(state.matchedLeft.size);
   el('attemptCount').textContent = String(state.attempts);
-  el('progressText').textContent = state.matchedLeft.size + ' / ' + state.leftItems.length + ' matched';
-  const progress = state.leftItems.length ? Math.round((state.matchedLeft.size / state.leftItems.length) * 100) : 0;
+  const totalPairs = state.leftItems.length;
+  const matchedPairs = state.matchedLeft.size;
+  const progress = totalPairs ? Math.round((matchedPairs / totalPairs) * 100) : 0;
+  el('progressText').textContent = matchedPairs + ' / ' + totalPairs + ' matched • ' + progress + '%';
   el('progressBar').style.width = progress + '%';
+  drawMatchLines();
+}
+
+function drawMatchLines() {
+  const svg = el('matchLines');
+  const gameGrid = document.querySelector('.game-grid');
+  if (!svg || !gameGrid) return;
+
+  const rect = gameGrid.getBoundingClientRect();
+  svg.setAttribute('viewBox', '0 0 ' + rect.width + ' ' + rect.height);
+  svg.innerHTML = '';
+
+  state.matchedPairOrder.forEach(function (_, pairId) {
+    const leftBtn = document.querySelector('.match-btn.correct[data-side="left"][data-pair-id="' + pairId + '"]');
+    const rightBtn = document.querySelector('.match-btn.correct[data-side="right"][data-pair-id="' + pairId + '"]');
+    if (!leftBtn || !rightBtn) return;
+
+    const leftRect = leftBtn.getBoundingClientRect();
+    const rightRect = rightBtn.getBoundingClientRect();
+    const x1 = leftRect.right - rect.left;
+    const y1 = leftRect.top - rect.top + (leftRect.height / 2);
+    const x2 = rightRect.left - rect.left;
+    const y2 = rightRect.top - rect.top + (rightRect.height / 2);
+    const bend = Math.max(28, Math.abs(x2 - x1) * 0.28);
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + bend) + ' ' + y1 + ', ' + (x2 - bend) + ' ' + y2 + ', ' + x2 + ' ' + y2);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', 'rgba(16, 185, 129, 0.68)');
+    path.setAttribute('stroke-width', '3');
+    path.setAttribute('stroke-linecap', 'round');
+    path.style.filter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.35))';
+    path.style.strokeDasharray = '8 5';
+    path.style.animation = 'match-pop .45s ease-out';
+    svg.appendChild(path);
+  });
 }
 
 function selectLeft(id) {
@@ -189,6 +231,7 @@ function maybeCheckMatch() {
     state.lastMatchedRight = right.id;
     setMessage('gameMessage', '✅ Correct match!', 'success');
     playTone('correct');
+    popCorrectFeedback();
     clearMatchPopSoon();
   } else {
     state.wrongFlashLeft = left.id;
@@ -205,6 +248,32 @@ function maybeCheckMatch() {
   renderGame();
 
   if (state.matchedLeft.size === state.leftItems.length) finishGame();
+}
+
+function popCorrectFeedback() {
+  const area = el('gameArea');
+  if (!area) return;
+  area.classList.remove('correct-pop');
+  void area.offsetWidth;
+  area.classList.add('correct-pop');
+  setTimeout(function () { area.classList.remove('correct-pop'); }, 280);
+}
+
+function triggerCelebration() {
+  const burst = el('celebrationBurst');
+  if (!burst) return;
+  burst.innerHTML = '';
+  const colors = ['#f59e0b', '#22c55e', '#06b6d4', '#6366f1', '#ec4899'];
+  for (let i = 0; i < 30; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    piece.style.left = Math.round(Math.random() * 100) + '%';
+    piece.style.top = Math.round(Math.random() * 30) + '%';
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = Math.round(Math.random() * 120) + 'ms';
+    burst.appendChild(piece);
+  }
+  setTimeout(function () { burst.innerHTML = ''; }, 1300);
 }
 
 async function finishGame() {
@@ -233,6 +302,7 @@ async function finishGame() {
   }
 
   setMessage('gameMessage', 'Done. Your result was saved.', 'success');
+  triggerCelebration();
   el('finishScore').textContent = score + '/' + total;
   el('finishDetails').innerHTML = 'Attempts: <strong>' + state.attempts + '</strong> · Time: <strong>' + duration + 's</strong>';
   el('finishOverlay').classList.remove('hidden');
