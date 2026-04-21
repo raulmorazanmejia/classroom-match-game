@@ -698,6 +698,7 @@
 
         const studentLink = buildInlineLink('Student Link', BASE_URL + '/?view=play&id=' + row.id);
         studentLink.target = '_blank';
+        studentLink.rel = 'noopener noreferrer';
 
         actions.appendChild(resultsLink);
         actions.appendChild(studentLink);
@@ -754,9 +755,9 @@
           'createMessage',
           'Activity created.<br><br>' +
             '<strong>Student Link:</strong><br>' +
-            '<a href="' + studentLink + '" target="_blank">' + studentLink + '</a><br><br>' +
+            '<a href="' + studentLink + '" target="_blank" rel="noopener noreferrer">' + studentLink + '</a><br><br>' +
             '<strong>Results Link:</strong><br>' +
-            '<a href="' + resultsLink + '" target="_blank">' + resultsLink + '</a>',
+            '<a href="' + resultsLink + '" target="_blank" rel="noopener noreferrer">' + resultsLink + '</a>',
           'success'
         );
       } catch (err) {
