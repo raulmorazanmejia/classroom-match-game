@@ -249,5 +249,7 @@ async function initRoute() {
   await loadDashboard();
 }
 
-bindBaseEvents();
-initRoute();
+window.addEventListener('DOMContentLoaded', function () {
+  bindBaseEvents();
+  initRoute();
+});
