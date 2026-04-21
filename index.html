@@ -423,6 +423,7 @@
     const SUPABASE_URL = 'https://cpouyxzsnmoiskxhrcut.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra';
     const GLOBAL_TEACHER_PASSWORD = 'intel123';
+    const BASE_URL = 'https://classroom-match-game.vercel.app';
 
     const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -676,8 +677,6 @@
       const tbody = el('dashboardTable').querySelector('tbody');
       tbody.innerHTML = '';
 
-      const base = window.location.origin + window.location.pathname;
-
       rows.forEach(function(row) {
         const tr = document.createElement('tr');
 
@@ -697,7 +696,7 @@
           goRoute('results', row.id);
         });
 
-        const studentLink = buildInlineLink('Student Link', base + '?view=play&id=' + row.id);
+        const studentLink = buildInlineLink('Student Link', BASE_URL + '/?view=play&id=' + row.id);
         studentLink.target = '_blank';
 
         actions.appendChild(resultsLink);
@@ -748,9 +747,8 @@
         if (result.error) throw result.error;
 
         const activity = result.data;
-        const base = window.location.origin + window.location.pathname;
-        const studentLink = base + '?view=play&id=' + activity.id;
-        const resultsLink = base + '?view=results&id=' + activity.id;
+        const studentLink = BASE_URL + '/?view=play&id=' + activity.id;
+        const resultsLink = BASE_URL + '/?view=results&id=' + activity.id;
 
         setMessage(
           'createMessage',
