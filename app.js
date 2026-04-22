@@ -201,6 +201,10 @@ function bindBaseEvents() {
   el('backToDashboardBtn').addEventListener('click', function () { goRoute('dashboard'); });
   el('startGameBtn').addEventListener('click', startGame);
   el('submitAssignmentBtn').addEventListener('click', submitAssignments);
+  const testSoundBtn = el('testSoundBtn');
+  if (testSoundBtn && typeof testGameSound === 'function') {
+    testSoundBtn.addEventListener('click', testGameSound);
+  }
   el('resultsBackBtn').addEventListener('click', function () { goRoute('dashboard'); });
   el('downloadCsvBtn').addEventListener('click', downloadCsv);
   el('closeFinishBtn').addEventListener('click', closeFinishOverlay);
