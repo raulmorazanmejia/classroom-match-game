@@ -11,23 +11,18 @@ function shuffle(arr) {
 
 function pairColorClass(pairNumber) {
   if (!pairNumber) return '';
-  const paletteSize = 10;
+  const paletteSize = 5;
   const colorIndex = ((pairNumber - 1) % paletteSize) + 1;
   return 'pair-color-' + colorIndex;
 }
 
 function pairStrokeColor(pairNumber) {
   const colors = [
-    'rgba(59, 130, 246, 0.76)',
-    'rgba(217, 70, 239, 0.74)',
-    'rgba(34, 197, 94, 0.74)',
-    'rgba(245, 158, 11, 0.74)',
-    'rgba(244, 63, 94, 0.74)',
-    'rgba(99, 102, 241, 0.74)',
-    'rgba(6, 182, 212, 0.74)',
-    'rgba(249, 115, 22, 0.74)',
-    'rgba(139, 92, 246, 0.74)',
-    'rgba(236, 72, 153, 0.74)'
+    'rgba(59, 130, 246, 0.78)',
+    'rgba(147, 51, 234, 0.76)',
+    'rgba(5, 150, 105, 0.76)',
+    'rgba(234, 88, 12, 0.76)',
+    'rgba(236, 72, 153, 0.76)'
   ];
   if (!pairNumber) return 'rgba(16, 185, 129, 0.68)';
   return colors[(pairNumber - 1) % colors.length];
@@ -143,8 +138,21 @@ function startGame() {
 function renderGame() {
   const leftList = el('leftList');
   const rightList = el('rightList');
+  const gameArea = el('gameArea');
+  const instructionEl = document.querySelector('.match-instruction');
+  const activeSide = state.selectedLeft ? 'left' : (state.selectedRight ? 'right' : null);
+  const pairingActive = Boolean(activeSide);
   leftList.innerHTML = '';
   rightList.innerHTML = '';
+  gameArea.classList.toggle('pairing-active', pairingActive);
+  gameArea.classList.toggle('pairing-left-active', activeSide === 'left');
+  gameArea.classList.toggle('pairing-right-active', activeSide === 'right');
+
+  if (instructionEl) {
+    instructionEl.textContent = pairingActive
+      ? 'Choose its matching item to complete the pair'
+      : 'Tap one item on the left, then its match on the right';
+  }
 
   state.leftItems.forEach(function (item, index) {
     const btn = document.createElement('button');
@@ -155,7 +163,15 @@ function renderGame() {
     if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
     if (state.lastMatchedLeft === item.id) btn.classList.add('matched-pop');
-    if (state.lastMatchedLeft === item.id) btn.classList.add('match-glow');
+    if (pairingActive && !state.matchedLeft.has(item.id)) {
+      if (state.selectedLeft === item.id) {
+        btn.classList.add('selection-anchor');
+      } else if (activeSide === 'right') {
+        btn.classList.add('possible-target');
+      } else {
+        btn.classList.add('deemphasized');
+      }
+    }
     btn.textContent = item.text;
     if (state.matchedLeft.has(item.id)) {
       const pairTag = document.createElement('span');
@@ -181,7 +197,15 @@ function renderGame() {
     if (state.matchedRight.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
     if (state.lastMatchedRight === item.id) btn.classList.add('matched-pop');
-    if (state.lastMatchedRight === item.id) btn.classList.add('match-glow');
+    if (pairingActive && !state.matchedRight.has(item.id)) {
+      if (state.selectedRight === item.id) {
+        btn.classList.add('selection-anchor');
+      } else if (activeSide === 'left') {
+        btn.classList.add('possible-target');
+      } else {
+        btn.classList.add('deemphasized');
+      }
+    }
     btn.textContent = item.text;
     if (state.matchedRight.has(item.id)) {
       const pairTag = document.createElement('span');
@@ -236,11 +260,37 @@ function drawMatchLines() {
     path.setAttribute('stroke', pairStrokeColor(pairNumber));
     path.setAttribute('stroke-width', '3');
     path.setAttribute('stroke-linecap', 'round');
-    path.style.filter = 'drop-shadow(0 0 6px ' + pairStrokeColor(pairNumber).replace('0.74', '0.35').replace('0.76', '0.35') + ')';
+    path.style.filter = 'drop-shadow(0 0 4px rgba(30, 41, 59, .18))';
     path.style.strokeDasharray = '8 5';
     path.style.animation = 'match-pop .45s ease-out';
     svg.appendChild(path);
   });
+
+  const selectedId = state.selectedLeft || state.selectedRight;
+  if (!selectedId) return;
+
+  const selectedSide = state.selectedLeft ? 'left' : 'right';
+  const selectedBtn = document.querySelector('.match-btn.selected[data-side="' + selectedSide + '"]');
+  const targetColumn = document.querySelector(selectedSide === 'left' ? '.match-column-right .option-list' : '.match-column-left .option-list');
+  if (!selectedBtn || !targetColumn) return;
+
+  const selectedRect = selectedBtn.getBoundingClientRect();
+  const targetRect = targetColumn.getBoundingClientRect();
+  const x1 = selectedSide === 'left' ? (selectedRect.right - rect.left) : (selectedRect.left - rect.left);
+  const y1 = selectedRect.top - rect.top + (selectedRect.height / 2);
+  const x2 = selectedSide === 'left' ? (targetRect.left - rect.left) : (targetRect.right - rect.left);
+  const y2 = targetRect.top - rect.top + Math.min(targetRect.height / 2, rect.height - 12);
+  const bend = Math.max(22, Math.abs(x2 - x1) * 0.24);
+
+  const previewPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  previewPath.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + (selectedSide === 'left' ? (x1 + bend) : (x1 - bend)) + ' ' + y1 + ', ' + (selectedSide === 'left' ? (x2 - bend) : (x2 + bend)) + ' ' + y2 + ', ' + x2 + ' ' + y2);
+  previewPath.setAttribute('fill', 'none');
+  previewPath.setAttribute('stroke', 'rgba(99, 102, 241, .35)');
+  previewPath.setAttribute('stroke-width', '2');
+  previewPath.setAttribute('stroke-dasharray', '6 8');
+  previewPath.setAttribute('stroke-linecap', 'round');
+  previewPath.style.animation = 'preview-dash 0.95s linear infinite';
+  svg.appendChild(previewPath);
 }
 
 function selectLeft(id) {
