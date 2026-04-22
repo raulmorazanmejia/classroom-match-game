@@ -17,15 +17,31 @@ function parsePairs(text) {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    let separator = null;
-    if (line.includes('|')) separator = '|';
-    else if (line.includes(',')) separator = ',';
-    else throw new Error('Each line must contain one comma or one vertical bar: ' + line);
+    const parserPatterns = [
+      { label: 'arrow (->)', regex: /\s*->\s*/g },
+      { label: 'pipe (|)', regex: /\s*\|\s*/g },
+      { label: 'tab', regex: /\t/g },
+      { label: 'comma', regex: /\s*,\s*/g }
+    ];
 
-    const parts = line.split(separator);
-    const left = (parts[0] || '').trim();
-    const right = parts.slice(1).join(separator).trim();
-    if (!left || !right) throw new Error('Both sides must contain text: ' + line);
+    let parts = null;
+    for (let j = 0; j < parserPatterns.length; j++) {
+      const candidate = line.split(parserPatterns[j].regex).map(function (part) { return part.trim(); });
+      if (candidate.length === 2) {
+        parts = candidate;
+        break;
+      }
+    }
+
+    if (!parts) {
+      throw new Error('Line ' + (i + 1) + ' must include exactly one separator (comma, pipe, tab, or ->).');
+    }
+
+    const left = parts[0];
+    const right = parts[1];
+    if (!left || !right) {
+      throw new Error('Line ' + (i + 1) + ' needs text on both sides of the separator.');
+    }
     parsed.push({ left: left, right: right });
   }
 
