@@ -11,21 +11,9 @@ function shuffle(arr) {
 
 function pairColorClass(pairNumber) {
   if (!pairNumber) return '';
-  const paletteSize = 5;
+  const paletteSize = 6;
   const colorIndex = ((pairNumber - 1) % paletteSize) + 1;
   return 'pair-color-' + colorIndex;
-}
-
-function pairStrokeColor(pairNumber) {
-  const colors = [
-    'rgba(59, 130, 246, 0.78)',
-    'rgba(147, 51, 234, 0.76)',
-    'rgba(5, 150, 105, 0.76)',
-    'rgba(234, 88, 12, 0.76)',
-    'rgba(236, 72, 153, 0.76)'
-  ];
-  if (!pairNumber) return 'rgba(16, 185, 129, 0.68)';
-  return colors[(pairNumber - 1) % colors.length];
 }
 
 const audioFx = {
@@ -88,19 +76,17 @@ async function loadActivityForPlay(id) {
 }
 
 function resetGameState() {
-  state.leftItems = [];
-  state.rightItems = [];
-  state.selectedLeft = null;
-  state.selectedRight = null;
-  state.matchedLeft = new Set();
-  state.matchedRight = new Set();
+  state.answerOptions = [];
+  state.promptItems = [];
+  state.selectedOptionId = null;
+  state.assignedByPrompt = new Map();
+  state.assignedPromptByOption = new Map();
+  state.assignmentCount = 0;
   state.attempts = 0;
   state.startTs = null;
-  state.wrongFlashLeft = null;
-  state.wrongFlashRight = null;
-  state.lastMatchedLeft = null;
-  state.lastMatchedRight = null;
-  state.matchedPairOrder = new Map();
+  state.feedbackByPrompt = new Map();
+  state.feedbackVisible = false;
+  state.isSubmitted = false;
 
   if (state.timerInt) clearInterval(state.timerInt);
   state.timerInt = null;
@@ -109,7 +95,7 @@ function resetGameState() {
   el('attemptCount').textContent = '0';
   el('timer').textContent = '0';
   el('progressBar').style.width = '0%';
-  el('progressText').textContent = '0 / 0 matched';
+  el('progressText').textContent = '0 / 0 assigned';
   setMessage('gameMessage', '', '');
 }
 
@@ -124,8 +110,13 @@ function startGame() {
   el('studentGate').classList.add('hidden');
   el('gameArea').classList.remove('hidden');
 
-  state.leftItems = shuffle(state.activity.pairs.map(function (pair, index) { return { id: 'L' + index, pairId: index, text: pair.left }; }));
-  state.rightItems = shuffle(state.activity.pairs.map(function (pair, index) { return { id: 'R' + index, pairId: index, text: pair.right }; }));
+  state.promptItems = state.activity.pairs.map(function (pair, index) {
+    return { id: 'P' + index, pairId: index, promptText: pair.left };
+  });
+
+  state.answerOptions = shuffle(state.activity.pairs.map(function (pair, index) {
+    return { id: 'O' + index, pairId: index, answerText: pair.right };
+  }));
 
   state.startTs = Date.now();
   state.timerInt = setInterval(function () {
@@ -135,262 +126,154 @@ function startGame() {
   renderGame();
 }
 
-function renderGame() {
-  const leftList = el('leftList');
-  const rightList = el('rightList');
-  const gameArea = el('gameArea');
-  const instructionEl = document.querySelector('.match-instruction');
-  const activeSide = state.selectedLeft ? 'left' : (state.selectedRight ? 'right' : null);
-  const pairingActive = Boolean(activeSide);
-  leftList.innerHTML = '';
-  rightList.innerHTML = '';
-  gameArea.classList.toggle('pairing-active', pairingActive);
-  gameArea.classList.toggle('pairing-left-active', activeSide === 'left');
-  gameArea.classList.toggle('pairing-right-active', activeSide === 'right');
-
-  if (instructionEl) {
-    instructionEl.textContent = pairingActive
-      ? 'Choose its matching item to complete the pair'
-      : 'Tap one item on the left, then its match on the right';
+function assignSelectedOptionToPrompt(promptId) {
+  if (!state.selectedOptionId) {
+    setMessage('gameMessage', 'Select an answer from the bank first, then tap a slot.', 'warning');
+    return;
   }
 
-  state.leftItems.forEach(function (item, index) {
-    const btn = document.createElement('button');
-    btn.className = 'match-btn';
-    btn.dataset.pairId = String(item.pairId);
-    btn.dataset.side = 'left';
-    if (state.selectedLeft === item.id) btn.classList.add('selected');
-    if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
-    if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
-    if (state.lastMatchedLeft === item.id) btn.classList.add('matched-pop');
-    if (pairingActive && !state.matchedLeft.has(item.id)) {
-      if (state.selectedLeft === item.id) {
-        btn.classList.add('selection-anchor');
-      } else if (activeSide === 'right') {
-        btn.classList.add('possible-target');
-      } else {
-        btn.classList.add('deemphasized');
-      }
-    }
-    btn.textContent = item.text;
-    if (state.matchedLeft.has(item.id)) {
-      const pairTag = document.createElement('span');
-      const pairNumber = state.matchedPairOrder.get(item.pairId);
-      pairTag.className = 'pair-tag ' + pairColorClass(pairNumber);
-      pairTag.textContent = '#' + pairNumber;
-      btn.appendChild(pairTag);
-    }
-    if (!state.matchedLeft.size && !state.matchedRight.size) {
-      btn.style.animation = 'card-shuffle-in 280ms ease-out both';
-      btn.style.animationDelay = Math.min(index * 36, 240) + 'ms';
-    }
-    btn.addEventListener('click', function () { selectLeft(item.id); });
-    leftList.appendChild(btn);
-  });
+  const selectedOptionId = state.selectedOptionId;
+  const previousPromptForOption = state.assignedPromptByOption.get(selectedOptionId);
+  if (previousPromptForOption && previousPromptForOption !== promptId) {
+    state.assignedByPrompt.delete(previousPromptForOption);
+  }
 
-  state.rightItems.forEach(function (item, index) {
-    const btn = document.createElement('button');
-    btn.className = 'match-btn';
-    btn.dataset.pairId = String(item.pairId);
-    btn.dataset.side = 'right';
-    if (state.selectedRight === item.id) btn.classList.add('selected');
-    if (state.matchedRight.has(item.id)) btn.classList.add('correct');
-    if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
-    if (state.lastMatchedRight === item.id) btn.classList.add('matched-pop');
-    if (pairingActive && !state.matchedRight.has(item.id)) {
-      if (state.selectedRight === item.id) {
-        btn.classList.add('selection-anchor');
-      } else if (activeSide === 'left') {
-        btn.classList.add('possible-target');
-      } else {
-        btn.classList.add('deemphasized');
-      }
-    }
-    btn.textContent = item.text;
-    if (state.matchedRight.has(item.id)) {
-      const pairTag = document.createElement('span');
-      const pairNumber = state.matchedPairOrder.get(item.pairId);
-      pairTag.className = 'pair-tag ' + pairColorClass(pairNumber);
-      pairTag.textContent = '#' + pairNumber;
-      btn.appendChild(pairTag);
-    }
-    if (!state.matchedLeft.size && !state.matchedRight.size) {
-      btn.style.animation = 'card-shuffle-in 280ms ease-out both';
-      btn.style.animationDelay = Math.min(index * 36, 240) + 'ms';
-    }
-    btn.addEventListener('click', function () { selectRight(item.id); });
-    rightList.appendChild(btn);
-  });
+  const previousOptionForPrompt = state.assignedByPrompt.get(promptId);
+  if (previousOptionForPrompt && previousOptionForPrompt !== selectedOptionId) {
+    state.assignedPromptByOption.delete(previousOptionForPrompt);
+  }
 
-  el('matchedCount').textContent = String(state.matchedLeft.size);
-  el('attemptCount').textContent = String(state.attempts);
-  const totalPairs = state.leftItems.length;
-  const matchedPairs = state.matchedLeft.size;
-  const progress = totalPairs ? Math.round((matchedPairs / totalPairs) * 100) : 0;
-  el('progressText').textContent = matchedPairs + ' / ' + totalPairs + ' matched';
-  el('progressBar').style.width = progress + '%';
-  drawMatchLines();
-}
+  state.assignedByPrompt.set(promptId, selectedOptionId);
+  state.assignedPromptByOption.set(selectedOptionId, promptId);
+  state.assignmentCount += 1;
+  state.isSubmitted = false;
+  state.feedbackVisible = false;
+  state.feedbackByPrompt.clear();
 
-function drawMatchLines() {
-  const svg = el('matchLines');
-  const gameGrid = document.querySelector('.game-grid');
-  if (!svg || !gameGrid) return;
-
-  const rect = gameGrid.getBoundingClientRect();
-  svg.setAttribute('viewBox', '0 0 ' + rect.width + ' ' + rect.height);
-  svg.innerHTML = '';
-
-  state.matchedPairOrder.forEach(function (pairNumber, pairId) {
-    const leftBtn = document.querySelector('.match-btn.correct[data-side="left"][data-pair-id="' + pairId + '"]');
-    const rightBtn = document.querySelector('.match-btn.correct[data-side="right"][data-pair-id="' + pairId + '"]');
-    if (!leftBtn || !rightBtn) return;
-
-    const leftRect = leftBtn.getBoundingClientRect();
-    const rightRect = rightBtn.getBoundingClientRect();
-    const x1 = leftRect.right - rect.left;
-    const y1 = leftRect.top - rect.top + (leftRect.height / 2);
-    const x2 = rightRect.left - rect.left;
-    const y2 = rightRect.top - rect.top + (rightRect.height / 2);
-    const bend = Math.max(28, Math.abs(x2 - x1) * 0.28);
-
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + bend) + ' ' + y1 + ', ' + (x2 - bend) + ' ' + y2 + ', ' + x2 + ' ' + y2);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', pairStrokeColor(pairNumber));
-    path.setAttribute('stroke-width', '3');
-    path.setAttribute('stroke-linecap', 'round');
-    path.style.filter = 'drop-shadow(0 0 4px rgba(30, 41, 59, .18))';
-    path.style.strokeDasharray = '8 5';
-    path.style.animation = 'match-pop .45s ease-out';
-    svg.appendChild(path);
-  });
-
-  const selectedId = state.selectedLeft || state.selectedRight;
-  if (!selectedId) return;
-
-  const selectedSide = state.selectedLeft ? 'left' : 'right';
-  const selectedBtn = document.querySelector('.match-btn.selected[data-side="' + selectedSide + '"]');
-  const targetColumn = document.querySelector(selectedSide === 'left' ? '.match-column-right .option-list' : '.match-column-left .option-list');
-  if (!selectedBtn || !targetColumn) return;
-
-  const selectedRect = selectedBtn.getBoundingClientRect();
-  const targetRect = targetColumn.getBoundingClientRect();
-  const x1 = selectedSide === 'left' ? (selectedRect.right - rect.left) : (selectedRect.left - rect.left);
-  const y1 = selectedRect.top - rect.top + (selectedRect.height / 2);
-  const x2 = selectedSide === 'left' ? (targetRect.left - rect.left) : (targetRect.right - rect.left);
-  const y2 = targetRect.top - rect.top + Math.min(targetRect.height / 2, rect.height - 12);
-  const bend = Math.max(22, Math.abs(x2 - x1) * 0.24);
-
-  const previewPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  previewPath.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + (selectedSide === 'left' ? (x1 + bend) : (x1 - bend)) + ' ' + y1 + ', ' + (selectedSide === 'left' ? (x2 - bend) : (x2 + bend)) + ' ' + y2 + ', ' + x2 + ' ' + y2);
-  previewPath.setAttribute('fill', 'none');
-  previewPath.setAttribute('stroke', 'rgba(99, 102, 241, .35)');
-  previewPath.setAttribute('stroke-width', '2');
-  previewPath.setAttribute('stroke-dasharray', '6 8');
-  previewPath.setAttribute('stroke-linecap', 'round');
-  previewPath.style.animation = 'preview-dash 0.95s linear infinite';
-  svg.appendChild(previewPath);
-}
-
-function selectLeft(id) {
-  if (state.matchedLeft.has(id)) return;
-  state.selectedLeft = id;
+  const assignedCount = state.assignedByPrompt.size;
+  setMessage('gameMessage', 'Assigned ' + assignedCount + ' of ' + state.promptItems.length + '. Tap Submit when ready.', 'warning');
   renderGame();
-  maybeCheckMatch();
 }
 
-function selectRight(id) {
-  if (state.matchedRight.has(id)) return;
-  state.selectedRight = id;
-  renderGame();
-  maybeCheckMatch();
-}
-
-function clearWrongFlashSoon() {
-  setTimeout(function () {
-    state.wrongFlashLeft = null;
-    state.wrongFlashRight = null;
-    renderGame();
-  }, 420);
-}
-
-function clearMatchPopSoon() {
-  setTimeout(function () {
-    state.lastMatchedLeft = null;
-    state.lastMatchedRight = null;
-    renderGame();
-  }, 320);
-}
-
-function maybeCheckMatch() {
-  if (!state.selectedLeft || !state.selectedRight) return;
-  const left = state.leftItems.find(function (item) { return item.id === state.selectedLeft; });
-  const right = state.rightItems.find(function (item) { return item.id === state.selectedRight; });
+function submitAssignments() {
+  if (state.assignedByPrompt.size < state.promptItems.length) {
+    setMessage('gameMessage', 'Fill every slot before submitting.', 'error');
+    return;
+  }
 
   state.attempts += 1;
+  state.feedbackVisible = true;
+  state.isSubmitted = true;
+  state.feedbackByPrompt.clear();
 
-  if (left.pairId === right.pairId) {
-    const matchNumber = state.matchedPairOrder.size + 1;
-    state.matchedPairOrder.set(left.pairId, matchNumber);
-    state.matchedLeft.add(left.id);
-    state.matchedRight.add(right.id);
-    state.wrongFlashLeft = null;
-    state.wrongFlashRight = null;
-    state.lastMatchedLeft = left.id;
-    state.lastMatchedRight = right.id;
-    setMessage('gameMessage', '✅ Correct match!', 'success');
+  let correctCount = 0;
+  state.promptItems.forEach(function (prompt) {
+    const assignedOptionId = state.assignedByPrompt.get(prompt.id);
+    const assignedOption = state.answerOptions.find(function (option) { return option.id === assignedOptionId; });
+    const isCorrect = Boolean(assignedOption && assignedOption.pairId === prompt.pairId);
+    state.feedbackByPrompt.set(prompt.id, isCorrect ? 'correct' : 'incorrect');
+    if (isCorrect) correctCount += 1;
+  });
+
+  if (correctCount === state.promptItems.length) {
+    setMessage('gameMessage', '✅ Perfect! All answers are correct.', 'success');
     playFeedbackSound('correct');
-    popCorrectFeedback();
-    clearMatchPopSoon();
+    finishGame();
   } else {
-    state.wrongFlashLeft = left.id;
-    state.wrongFlashRight = right.id;
-    state.lastMatchedLeft = null;
-    state.lastMatchedRight = null;
-    setMessage('gameMessage', '❌ Not a match. Try again.', 'error');
+    setMessage('gameMessage', '❌ ' + correctCount + '/' + state.promptItems.length + ' correct. Adjust and submit again.', 'error');
     playFeedbackSound('wrong');
-    clearWrongFlashSoon();
   }
 
-  state.selectedLeft = null;
-  state.selectedRight = null;
   renderGame();
-
-  if (state.matchedLeft.size === state.leftItems.length) finishGame();
 }
 
-function popCorrectFeedback() {
-  const area = el('gameArea');
-  if (!area) return;
-  area.classList.remove('correct-pop');
-  void area.offsetWidth;
-  area.classList.add('correct-pop');
-  setTimeout(function () { area.classList.remove('correct-pop'); }, 280);
-}
+function renderGame() {
+  const bank = el('answerBank');
+  const promptList = el('promptList');
+  bank.innerHTML = '';
+  promptList.innerHTML = '';
 
-function triggerCelebration() {
-  const burst = el('celebrationBurst');
-  if (!burst) return;
-  burst.innerHTML = '';
-  const colors = ['#f59e0b', '#22c55e', '#06b6d4', '#6366f1', '#ec4899'];
-  for (let i = 0; i < 30; i++) {
-    const piece = document.createElement('span');
-    piece.className = 'confetti-piece';
-    piece.style.left = Math.round(Math.random() * 100) + '%';
-    piece.style.top = Math.round(Math.random() * 30) + '%';
-    piece.style.background = colors[i % colors.length];
-    piece.style.animationDelay = Math.round(Math.random() * 120) + 'ms';
-    burst.appendChild(piece);
-  }
-  setTimeout(function () { burst.innerHTML = ''; }, 1300);
+  state.answerOptions.forEach(function (option, index) {
+    const pill = document.createElement('button');
+    pill.className = 'answer-pill ' + pairColorClass(option.pairId + 1);
+    pill.type = 'button';
+    pill.textContent = option.answerText;
+    pill.dataset.optionId = option.id;
+
+    const isAssigned = state.assignedPromptByOption.has(option.id);
+    const assignedPromptId = state.assignedPromptByOption.get(option.id);
+
+    if (isAssigned) {
+      pill.classList.add('assigned');
+      const number = state.promptItems.findIndex(function (prompt) { return prompt.id === assignedPromptId; }) + 1;
+      pill.setAttribute('aria-label', option.answerText + ' assigned to prompt ' + number);
+    }
+
+    if (state.selectedOptionId === option.id) {
+      pill.classList.add('selected');
+    }
+
+    pill.addEventListener('click', function () {
+      state.selectedOptionId = state.selectedOptionId === option.id ? null : option.id;
+      renderGame();
+    });
+
+    bank.appendChild(pill);
+  });
+
+  state.promptItems.forEach(function (prompt, index) {
+    const row = document.createElement('div');
+    row.className = 'prompt-row';
+
+    const slot = document.createElement('button');
+    slot.className = 'target-slot';
+    slot.type = 'button';
+
+    const assignedOptionId = state.assignedByPrompt.get(prompt.id);
+    const assignedOption = state.answerOptions.find(function (option) { return option.id === assignedOptionId; });
+
+    if (assignedOption) {
+      slot.textContent = assignedOption.answerText;
+      slot.classList.add('filled', pairColorClass(assignedOption.pairId + 1));
+    } else {
+      slot.textContent = 'Tap to place answer';
+      slot.classList.add('empty');
+    }
+
+    if (state.feedbackVisible) {
+      const feedbackClass = state.feedbackByPrompt.get(prompt.id);
+      if (feedbackClass === 'correct') slot.classList.add('feedback-correct');
+      if (feedbackClass === 'incorrect') slot.classList.add('feedback-incorrect');
+    }
+
+    slot.addEventListener('click', function () {
+      assignSelectedOptionToPrompt(prompt.id);
+    });
+
+    const promptText = document.createElement('div');
+    promptText.className = 'prompt-text';
+    promptText.textContent = (index + 1) + '. ' + prompt.promptText;
+
+    row.appendChild(slot);
+    row.appendChild(promptText);
+    promptList.appendChild(row);
+  });
+
+  const total = state.promptItems.length;
+  const assigned = state.assignedByPrompt.size;
+  const percent = total ? Math.round((assigned / total) * 100) : 0;
+
+  el('matchedCount').textContent = String(assigned);
+  el('attemptCount').textContent = String(state.attempts);
+  el('progressText').textContent = assigned + ' / ' + total + ' assigned';
+  el('progressBar').style.width = percent + '%';
 }
 
 async function finishGame() {
   if (state.timerInt) clearInterval(state.timerInt);
 
   const duration = Math.floor((Date.now() - state.startTs) / 1000);
-  const total = state.leftItems.length;
+  const total = state.promptItems.length;
   const score = total;
 
   setMessage('gameMessage', 'Finished. Saving your result...', 'warning');
@@ -412,9 +295,8 @@ async function finishGame() {
   }
 
   setMessage('gameMessage', 'Done. Your result was saved.', 'success');
-  triggerCelebration();
   el('finishScore').textContent = score + '/' + total;
-  el('finishDetails').innerHTML = 'Attempts: <strong>' + state.attempts + '</strong> · Time: <strong>' + duration + 's</strong>';
+  el('finishDetails').innerHTML = 'Submits: <strong>' + state.attempts + '</strong> · Time: <strong>' + duration + 's</strong>';
   el('finishOverlay').classList.remove('hidden');
 }
 

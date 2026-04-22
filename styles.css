@@ -331,3 +331,104 @@ th { background: #f9fafb; font-size: .92rem; }
   .column-label { font-size: .78rem; }
   button, .inline-link, input, textarea { font-size: 16px; }
 }
+
+/* Wordwall-style assignment interface */
+.assignment-layout {
+  display: grid;
+  gap: 16px;
+}
+.answer-bank-wrap,
+.prompt-wrap {
+  border: 2px solid #dbe3ff;
+  border-radius: 16px;
+  padding: 12px;
+  background: #f8faff;
+}
+.answer-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.answer-pill {
+  border: none;
+  border-radius: 999px;
+  padding: 12px 16px;
+  min-height: 52px;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(17, 24, 39, .18);
+}
+.answer-pill.selected {
+  transform: scale(1.04);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .85), 0 10px 20px rgba(17, 24, 39, .26);
+}
+.answer-pill.assigned {
+  opacity: .62;
+}
+
+.pair-color-1 { background: #2563eb; }
+.pair-color-2 { background: #9333ea; }
+.pair-color-3 { background: #10b981; }
+.pair-color-4 { background: #f97316; }
+.pair-color-5 { background: #ec4899; }
+.pair-color-6 { background: #06b6d4; }
+
+.prompt-list {
+  display: grid;
+  gap: 10px;
+}
+.prompt-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 210px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+.target-slot {
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 56px;
+  border: 2px dashed #94a3b8;
+  background: #fff;
+  color: #334155;
+  border-radius: 12px;
+  font-weight: 800;
+  box-shadow: none;
+  text-align: left;
+}
+.target-slot.empty {
+  color: #64748b;
+}
+.target-slot.filled {
+  border-style: solid;
+  color: #fff;
+}
+.target-slot.feedback-correct {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, .35);
+}
+.target-slot.feedback-incorrect {
+  animation: slot-wrong 380ms ease;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, .35);
+}
+.prompt-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  line-height: 1.35;
+  word-break: break-word;
+}
+
+@keyframes slot-wrong {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  50% { transform: translateX(4px); }
+  80% { transform: translateX(-3px); }
+}
+
+@media (max-width: 740px) {
+  .assignment-layout { gap: 12px; }
+  .answer-bank { gap: 10px; }
+  .answer-pill { width: 100%; justify-content: center; min-height: 56px; }
+  .prompt-row { grid-template-columns: 1fr; }
+  .target-slot { min-height: 58px; }
+}
