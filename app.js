@@ -192,6 +192,7 @@ function downloadCsv() {
 }
 
 function bindBaseEvents() {
+  if (typeof initGameAudio === 'function') initGameAudio();
   el('loginBtn').addEventListener('click', handleLogin);
   el('createFromDashboardBtn').addEventListener('click', function () { goRoute('create'); });
   el('refreshDashboardBtn').addEventListener('click', loadDashboard);

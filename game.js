@@ -9,6 +9,30 @@ function shuffle(arr) {
   return copy;
 }
 
+const audioFx = {
+  unlocked: false,
+  initialized: false
+};
+
+function unlockAudioOnFirstInteraction() {
+  if (audioFx.unlocked) return;
+  audioFx.unlocked = true;
+}
+
+function initGameAudio() {
+  if (audioFx.initialized) return;
+  audioFx.initialized = true;
+
+  ['pointerdown', 'touchstart', 'keydown'].forEach(function (evtName) {
+    window.addEventListener(evtName, unlockAudioOnFirstInteraction, { once: true, passive: true });
+  });
+}
+
+function playFeedbackSound(kind) {
+  if (!audioFx.unlocked) return;
+  playTone(kind);
+}
+
 function playTone(kind) {
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -19,12 +43,12 @@ function playTone(kind) {
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     oscillator.type = 'sine';
-    oscillator.frequency.value = kind === 'correct' ? 660 : 220;
+    oscillator.frequency.value = kind === 'correct' ? 680 : 190;
     gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + (kind === 'correct' ? 0.18 : 0.22));
+    oscillator.stop(audioCtx.currentTime + 0.2);
   } catch (e) {}
 }
 
@@ -230,7 +254,7 @@ function maybeCheckMatch() {
     state.lastMatchedLeft = left.id;
     state.lastMatchedRight = right.id;
     setMessage('gameMessage', '✅ Correct match!', 'success');
-    playTone('correct');
+    playFeedbackSound('correct');
     popCorrectFeedback();
     clearMatchPopSoon();
   } else {
@@ -239,7 +263,7 @@ function maybeCheckMatch() {
     state.lastMatchedLeft = null;
     state.lastMatchedRight = null;
     setMessage('gameMessage', '❌ Not a match. Try again.', 'error');
-    playTone('wrong');
+    playFeedbackSound('wrong');
     clearWrongFlashSoon();
   }
 

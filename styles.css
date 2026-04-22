@@ -145,15 +145,15 @@ button.danger { background: linear-gradient(160deg, #ef4444, #dc2626); }
 }
 .option-list { display: grid; gap: 12px; }
 .match-btn {
-  width: 100%; text-align: left; border: 2px solid #c7d2fe; border-radius: 16px;
-  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%); color: var(--text); min-height: 72px; padding: 15px; font-weight: 700;
+  width: 100%; text-align: left; border: 2px solid #d1d5db; border-radius: 16px;
+  background: #f9fafb; color: var(--text); min-height: 72px; padding: 15px; font-weight: 700;
   position: relative;
   box-shadow: 0 8px 20px rgba(99, 102, 241, .08);
-  transition: transform .2s ease, background-color .2s ease, border-color .2s ease, box-shadow .2s ease, filter .2s ease;
+  transition: transform .24s ease, background-color .24s ease, border-color .24s ease, box-shadow .24s ease, filter .24s ease;
 }
 .match-btn:hover:not(.correct) {
   border-color: #a5b4fc;
-  background: linear-gradient(180deg, #ffffff 0%, #eef4ff 100%);
+  background: #f3f4f6;
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(99, 102, 241, .14);
 }
@@ -161,22 +161,22 @@ button.danger { background: linear-gradient(160deg, #ef4444, #dc2626); }
   transform: scale(.98);
 }
 .match-btn.selected {
-  border-color: #4338ca;
-  background: linear-gradient(180deg, #eef2ff 0%, #dbeafe 100%);
-  box-shadow: 0 0 0 5px rgba(99,102,241,.26), 0 14px 30px rgba(67,56,202,.2);
+  border-color: #4f46e5;
+  background: #dbeafe;
+  box-shadow: 0 0 0 5px rgba(79,70,229,.24), 0 14px 30px rgba(67,56,202,.2);
   transform: scale(1.02);
-  animation: selected-pulse .85s ease-out;
+  animation: selected-pulse .28s ease-out;
 }
 .match-btn.correct {
-  border-color: #34d399;
-  background: linear-gradient(180deg, #ecfdf5 0%, #ccfbf1 100%);
+  border-color: #10b981;
+  background: #d1fae5;
   color: #065f46;
-  box-shadow: 0 0 0 4px rgba(16, 185, 129, .16), 0 10px 28px rgba(16, 185, 129, .2);
-  filter: saturate(1.08);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, .22), 0 10px 28px rgba(16, 185, 129, .2);
+  filter: saturate(1.03);
   cursor: default;
 }
-.match-btn.wrong { border-color: #f87171; background: #fee2e2; color: #991b1b; animation: shake .25s ease 1; }
-.match-btn.matched-pop { animation: match-pop .5s cubic-bezier(.22,.61,.36,1) 1; }
+.match-btn.wrong { border-color: #ef4444; background: #fee2e2; color: #991b1b; animation: shake .28s ease-in-out 1; }
+.match-btn.matched-pop { animation: match-pop .26s ease-out 1; }
 .pair-tag {
   position: absolute;
   right: 10px;
@@ -212,13 +212,16 @@ button.danger { background: linear-gradient(160deg, #ef4444, #dc2626); }
 
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  30% { transform: translateX(-3px); }
-  60% { transform: translateX(3px); }
+  15% { transform: translateX(-5px); }
+  30% { transform: translateX(5px); }
+  45% { transform: translateX(-5px); }
+  60% { transform: translateX(5px); }
+  75% { transform: translateX(-3px); }
 }
 
 @keyframes match-pop {
-  0% { transform: scale(.95); }
-  55% { transform: scale(1.08); }
+  0% { transform: scale(1); }
+  45% { transform: scale(1.05); }
   100% { transform: scale(1); }
 }
 @keyframes selected-pulse {

@@ -60,7 +60,7 @@
 
     <section id="createView" class="card hidden">
       <h2>Create Match Activity</h2>
-      <p class="muted">Format each line as <strong>left, right</strong> or <strong>left | right</strong>.</p>
+      <p class="muted">Format each line as <strong>left, right</strong>, <strong>left | right</strong>, <strong>left[TAB]right</strong>, or <strong>left -> right</strong>.</p>
       <div class="row">
         <div class="col">
           <label for="teacherName">Teacher Name</label>
@@ -73,6 +73,7 @@
       </div>
       <label for="pairsInput">Pairs</label>
       <textarea id="pairsInput" placeholder="destroyed, was destroyed by the tornado&#10;stolen | was stolen last night&#10;broken, was broken by the wind"></textarea>
+      <p class="muted mt-12">You can paste pairs using commas, pipes (|), tabs, or arrows (-&gt;)</p>
       <div class="chip-row mt-12">
         <span class="chip">Mobile-friendly</span>
         <span class="chip">Tap-to-match</span>
