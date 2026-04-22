@@ -336,6 +336,7 @@ th { background: #f9fafb; font-size: .92rem; }
 .assignment-layout {
   display: grid;
   gap: 16px;
+  --match-columns: 2;
 }
 .answer-bank-wrap,
 .prompt-wrap {
@@ -346,11 +347,31 @@ th { background: #f9fafb; font-size: .92rem; }
 }
 .answer-bank {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(var(--match-columns), minmax(0, 1fr));
   gap: 10px;
   align-items: stretch;
   min-height: 64px;
   contain: layout paint;
+}
+.audio-tools {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 10px;
+}
+.sound-status {
+  font-weight: 800;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 999px;
+  padding: 6px 10px;
+}
+.sound-status.ready {
+  color: #065f46;
+  background: #ecfdf5;
+  border-color: #6ee7b7;
 }
 .answer-pill {
   width: 100%;
@@ -367,6 +388,7 @@ th { background: #f9fafb; font-size: .92rem; }
   justify-content: flex-start;
   line-height: 1.25;
   transition: box-shadow .18s ease, filter .18s ease;
+  touch-action: manipulation;
 }
 .answer-pill:hover {
   transform: none;
@@ -391,21 +413,25 @@ th { background: #f9fafb; font-size: .92rem; }
 
 .prompt-list {
   display: grid;
+  grid-template-columns: repeat(var(--match-columns), minmax(0, 1fr));
   gap: 10px;
   contain: layout paint;
 }
 .prompt-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(170px, 240px);
-  gap: 10px;
-  align-items: center;
-  min-height: 78px;
+  gap: 8px;
+  align-content: start;
+  min-height: 124px;
+  border: 1px solid #d6dcff;
+  border-radius: 12px;
+  background: #ffffff;
+  padding: 10px;
 }
 .target-slot {
   justify-content: flex-start;
   width: 100%;
-  min-height: 64px;
-  height: 64px;
+  min-height: 52px;
+  height: 52px;
   border: 2px dashed #94a3b8;
   background: #f8fafc;
   color: #334155;
@@ -417,6 +443,7 @@ th { background: #f9fafb; font-size: .92rem; }
   display: flex;
   align-items: center;
   overflow: hidden;
+  touch-action: manipulation;
 }
 .target-slot:hover {
   transform: none;
@@ -461,6 +488,7 @@ th { background: #f9fafb; font-size: .92rem; }
   color: #1f2937;
   line-height: 1.35;
   word-break: break-word;
+  min-height: 46px;
 }
 
 @keyframes slot-wrong {
@@ -472,15 +500,17 @@ th { background: #f9fafb; font-size: .92rem; }
 
 @media (max-width: 740px) {
   .assignment-layout { gap: 12px; }
+  .audio-tools {
+    flex-direction: column;
+    gap: 8px;
+  }
   .answer-bank {
     gap: 8px;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .answer-pill { min-height: 56px; height: 56px; font-size: .95rem; }
   .prompt-row {
-    grid-template-columns: 1fr;
-    min-height: auto;
+    min-height: 118px;
     gap: 8px;
   }
-  .target-slot { min-height: 62px; height: 62px; }
+  .target-slot { min-height: 52px; height: 52px; }
 }

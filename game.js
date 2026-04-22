@@ -21,6 +21,20 @@ const audioFx = {
   initialized: false,
   ctx: null
 };
+const DEFAULT_MATCH_COLUMNS = 2;
+
+function updateAudioStatusLabel(isReady) {
+  const statusEl = el('soundStatus');
+  if (!statusEl) return;
+  statusEl.textContent = isReady ? 'Sound ready' : 'Sound blocked';
+  statusEl.classList.toggle('ready', isReady);
+}
+
+function refreshAudioStatus() {
+  const audioCtx = ensureAudioContext();
+  const isReady = Boolean(audioCtx && audioFx.unlocked && audioCtx.state === 'running');
+  updateAudioStatusLabel(isReady);
+}
 
 function ensureAudioContext() {
   const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -44,19 +58,42 @@ function warmupAudioContext(audioCtx) {
 function unlockAudioOnFirstInteraction() {
   if (audioFx.unlocked) return Promise.resolve();
   const audioCtx = ensureAudioContext();
-  if (!audioCtx) return Promise.resolve();
+  if (!audioCtx) {
+    updateAudioStatusLabel(false);
+    return Promise.resolve();
+  }
   return audioCtx.resume().then(function () {
     warmupAudioContext(audioCtx);
-    audioFx.unlocked = true;
+    audioFx.unlocked = audioCtx.state === 'running';
+    console.log('audio resume state:', audioCtx.state);
+    refreshAudioStatus();
   }).catch(function () {});
 }
 
 function initGameAudio() {
   if (audioFx.initialized) return;
   audioFx.initialized = true;
+  refreshAudioStatus();
 
   ['pointerdown', 'touchend', 'mousedown', 'keydown'].forEach(function (evtName) {
     window.addEventListener(evtName, unlockAudioOnFirstInteraction, { once: true, capture: true });
+  });
+}
+
+function testGameSound() {
+  const audioCtx = ensureAudioContext();
+  if (!audioCtx) {
+    updateAudioStatusLabel(false);
+    return;
+  }
+  audioCtx.resume().then(function () {
+    warmupAudioContext(audioCtx);
+    audioFx.unlocked = audioCtx.state === 'running';
+    console.log('test sound resume state:', audioCtx.state);
+    refreshAudioStatus();
+    if (audioFx.unlocked) playTone('correct');
+  }).catch(function () {
+    updateAudioStatusLabel(false);
   });
 }
 
@@ -151,6 +188,7 @@ function startGame() {
   state.answerOptions = shuffle(state.activity.pairs.map(function (pair, index) {
     return { id: 'O' + index, pairId: index, answerText: pair.right };
   }));
+  state.matchColumns = DEFAULT_MATCH_COLUMNS;
 
   state.startTs = Date.now();
   state.timerInt = setInterval(function () {
@@ -238,8 +276,11 @@ function submitAssignments() {
 function renderGame() {
   const bank = el('answerBank');
   const promptList = el('promptList');
+  const assignmentLayout = document.querySelector('.assignment-layout');
+  const matchColumns = state.matchColumns || DEFAULT_MATCH_COLUMNS;
   bank.innerHTML = '';
   promptList.innerHTML = '';
+  if (assignmentLayout) assignmentLayout.style.setProperty('--match-columns', String(matchColumns));
 
   state.answerOptions.forEach(function (option) {
     const pill = document.createElement('button');
@@ -275,10 +316,6 @@ function renderGame() {
   state.promptItems.forEach(function (prompt, index) {
     const row = document.createElement('div');
     row.className = 'prompt-row';
-
-    const promptText = document.createElement('div');
-    promptText.className = 'prompt-text';
-    promptText.textContent = (index + 1) + '. ' + prompt.promptText;
 
     const slot = document.createElement('button');
     slot.className = 'target-slot';
@@ -336,8 +373,11 @@ function renderGame() {
       }
     });
 
-    row.appendChild(promptText);
     row.appendChild(slot);
+    const promptText = document.createElement('div');
+    promptText.className = 'prompt-text';
+    promptText.textContent = (index + 1) + '. ' + prompt.promptText;
+    row.appendChild(promptText);
     promptList.appendChild(row);
   });
 
