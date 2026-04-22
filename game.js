@@ -18,12 +18,18 @@ function pairColorClass(pairNumber) {
 
 const audioFx = {
   unlocked: false,
-  initialized: false
+  initialized: false,
+  ctx: null
 };
 
 function unlockAudioOnFirstInteraction() {
-  if (audioFx.unlocked) return;
-  audioFx.unlocked = true;
+  if (audioFx.unlocked) return Promise.resolve();
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return Promise.resolve();
+  if (!audioFx.ctx) audioFx.ctx = new AudioContextClass();
+  return audioFx.ctx.resume().then(function () {
+    audioFx.unlocked = true;
+  }).catch(function () {});
 }
 
 function initGameAudio() {
@@ -42,20 +48,20 @@ function playFeedbackSound(kind) {
 
 function playTone(kind) {
   try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const audioCtx = new AudioContextClass();
+    if (!audioFx.ctx || !audioFx.unlocked) return;
+    const audioCtx = audioFx.ctx;
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     oscillator.type = 'sine';
-    oscillator.frequency.value = kind === 'correct' ? 680 : 190;
+    oscillator.frequency.value = kind === 'correct' ? 920 : 260;
     gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(0.12, audioCtx.currentTime + 0.01);
-    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    gainNode.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.015);
+    gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.14);
     oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.2);
+    oscillator.stop(audioCtx.currentTime + 0.14);
+    console.log(kind === 'correct' ? 'correct sound' : 'wrong sound');
   } catch (e) {}
 }
 
@@ -133,6 +139,7 @@ function assignSelectedOptionToPrompt(promptId) {
   }
 
   const selectedOptionId = state.selectedOptionId;
+  if (!selectedOptionId) return;
   const previousPromptForOption = state.assignedPromptByOption.get(selectedOptionId);
   if (previousPromptForOption && previousPromptForOption !== promptId) {
     state.assignedByPrompt.delete(previousPromptForOption);
@@ -145,6 +152,7 @@ function assignSelectedOptionToPrompt(promptId) {
 
   state.assignedByPrompt.set(promptId, selectedOptionId);
   state.assignedPromptByOption.set(selectedOptionId, promptId);
+  state.selectedOptionId = null;
   state.assignmentCount += 1;
   state.isSubmitted = false;
   state.feedbackVisible = false;
@@ -152,6 +160,18 @@ function assignSelectedOptionToPrompt(promptId) {
 
   const assignedCount = state.assignedByPrompt.size;
   setMessage('gameMessage', 'Assigned ' + assignedCount + ' of ' + state.promptItems.length + '. Tap Submit when ready.', 'warning');
+  renderGame();
+}
+
+function clearAssignment(promptId) {
+  const optionId = state.assignedByPrompt.get(promptId);
+  if (!optionId) return;
+  state.assignedByPrompt.delete(promptId);
+  state.assignedPromptByOption.delete(optionId);
+  state.isSubmitted = false;
+  state.feedbackVisible = false;
+  state.feedbackByPrompt.clear();
+  setMessage('gameMessage', 'Answer returned to bank.', 'warning');
   renderGame();
 }
 
@@ -193,26 +213,24 @@ function renderGame() {
   bank.innerHTML = '';
   promptList.innerHTML = '';
 
-  state.answerOptions.forEach(function (option, index) {
+  state.answerOptions.filter(function (option) {
+    return !state.assignedPromptByOption.has(option.id);
+  }).forEach(function (option) {
     const pill = document.createElement('button');
     pill.className = 'answer-pill ' + pairColorClass(option.pairId + 1);
     pill.type = 'button';
     pill.textContent = option.answerText;
     pill.dataset.optionId = option.id;
-
-    const isAssigned = state.assignedPromptByOption.has(option.id);
-    const assignedPromptId = state.assignedPromptByOption.get(option.id);
-
-    if (isAssigned) {
-      pill.classList.add('assigned');
-      const number = state.promptItems.findIndex(function (prompt) { return prompt.id === assignedPromptId; }) + 1;
-      pill.setAttribute('aria-label', option.answerText + ' assigned to prompt ' + number);
-    }
+    pill.draggable = true;
 
     if (state.selectedOptionId === option.id) {
       pill.classList.add('selected');
     }
 
+    pill.addEventListener('dragstart', function (event) {
+      event.dataTransfer.setData('text/plain', option.id);
+      event.dataTransfer.effectAllowed = 'move';
+    });
     pill.addEventListener('click', function () {
       state.selectedOptionId = state.selectedOptionId === option.id ? null : option.id;
       renderGame();
@@ -228,15 +246,25 @@ function renderGame() {
     const slot = document.createElement('button');
     slot.className = 'target-slot';
     slot.type = 'button';
+    slot.dataset.promptId = prompt.id;
 
     const assignedOptionId = state.assignedByPrompt.get(prompt.id);
     const assignedOption = state.answerOptions.find(function (option) { return option.id === assignedOptionId; });
 
     if (assignedOption) {
-      slot.textContent = assignedOption.answerText;
-      slot.classList.add('filled', pairColorClass(assignedOption.pairId + 1));
+      slot.classList.add('filled');
+      const tile = document.createElement('span');
+      tile.className = 'slot-tile ' + pairColorClass(assignedOption.pairId + 1);
+      tile.textContent = assignedOption.answerText;
+      tile.draggable = true;
+      tile.dataset.optionId = assignedOption.id;
+      tile.addEventListener('dragstart', function (event) {
+        event.dataTransfer.setData('text/plain', assignedOption.id);
+        event.dataTransfer.effectAllowed = 'move';
+      });
+      slot.appendChild(tile);
     } else {
-      slot.textContent = 'Tap to place answer';
+      slot.textContent = 'Drop or tap to place';
       slot.classList.add('empty');
     }
 
@@ -246,8 +274,29 @@ function renderGame() {
       if (feedbackClass === 'incorrect') slot.classList.add('feedback-incorrect');
     }
 
-    slot.addEventListener('click', function () {
+    slot.addEventListener('dragover', function (event) {
+      event.preventDefault();
+      slot.classList.add('drag-hover');
+    });
+    slot.addEventListener('dragleave', function () {
+      slot.classList.remove('drag-hover');
+    });
+    slot.addEventListener('drop', function (event) {
+      event.preventDefault();
+      slot.classList.remove('drag-hover');
+      const droppedOptionId = event.dataTransfer.getData('text/plain');
+      if (!droppedOptionId) return;
+      state.selectedOptionId = droppedOptionId;
       assignSelectedOptionToPrompt(prompt.id);
+    });
+    slot.addEventListener('click', function () {
+      if (state.selectedOptionId) {
+        assignSelectedOptionToPrompt(prompt.id);
+        return;
+      }
+      if (assignedOption) {
+        clearAssignment(prompt.id);
+      }
     });
 
     const promptText = document.createElement('div');
