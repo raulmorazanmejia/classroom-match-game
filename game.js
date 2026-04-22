@@ -22,12 +22,31 @@ const audioFx = {
   ctx: null
 };
 
+function ensureAudioContext() {
+  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextClass) return null;
+  if (!audioFx.ctx) audioFx.ctx = new AudioContextClass();
+  return audioFx.ctx;
+}
+
+function warmupAudioContext(audioCtx) {
+  if (!audioCtx) return;
+  try {
+    const buffer = audioCtx.createBuffer(1, 1, 22050);
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
+    source.stop(0);
+  } catch (e) {}
+}
+
 function unlockAudioOnFirstInteraction() {
   if (audioFx.unlocked) return Promise.resolve();
-  const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-  if (!AudioContextClass) return Promise.resolve();
-  if (!audioFx.ctx) audioFx.ctx = new AudioContextClass();
-  return audioFx.ctx.resume().then(function () {
+  const audioCtx = ensureAudioContext();
+  if (!audioCtx) return Promise.resolve();
+  return audioCtx.resume().then(function () {
+    warmupAudioContext(audioCtx);
     audioFx.unlocked = true;
   }).catch(function () {});
 }
@@ -36,13 +55,22 @@ function initGameAudio() {
   if (audioFx.initialized) return;
   audioFx.initialized = true;
 
-  ['pointerdown', 'touchstart', 'keydown'].forEach(function (evtName) {
-    window.addEventListener(evtName, unlockAudioOnFirstInteraction, { once: true, passive: true });
+  ['pointerdown', 'touchend', 'mousedown', 'keydown'].forEach(function (evtName) {
+    window.addEventListener(evtName, unlockAudioOnFirstInteraction, { once: true, capture: true });
   });
 }
 
 function playFeedbackSound(kind) {
-  if (!audioFx.unlocked) return;
+  const audioCtx = ensureAudioContext();
+  if (!audioCtx) return;
+  if (!audioFx.unlocked || audioCtx.state !== 'running') {
+    audioCtx.resume().then(function () {
+      audioFx.unlocked = audioCtx.state === 'running';
+      if (!audioFx.unlocked) return;
+      playTone(kind);
+    }).catch(function () {});
+    return;
+  }
   playTone(kind);
 }
 
@@ -213,25 +241,30 @@ function renderGame() {
   bank.innerHTML = '';
   promptList.innerHTML = '';
 
-  state.answerOptions.filter(function (option) {
-    return !state.assignedPromptByOption.has(option.id);
-  }).forEach(function (option) {
+  state.answerOptions.forEach(function (option) {
     const pill = document.createElement('button');
     pill.className = 'answer-pill ' + pairColorClass(option.pairId + 1);
     pill.type = 'button';
-    pill.textContent = option.answerText;
     pill.dataset.optionId = option.id;
-    pill.draggable = true;
+    const isAssigned = state.assignedPromptByOption.has(option.id);
+    pill.textContent = isAssigned ? '' : option.answerText;
+    pill.draggable = !isAssigned;
+    pill.classList.toggle('is-hidden', isAssigned);
+    pill.disabled = isAssigned;
+    pill.setAttribute('aria-hidden', isAssigned ? 'true' : 'false');
+    if (isAssigned) pill.setAttribute('tabindex', '-1');
 
-    if (state.selectedOptionId === option.id) {
+    if (!isAssigned && state.selectedOptionId === option.id) {
       pill.classList.add('selected');
     }
 
     pill.addEventListener('dragstart', function (event) {
+      if (isAssigned) return;
       event.dataTransfer.setData('text/plain', option.id);
       event.dataTransfer.effectAllowed = 'move';
     });
     pill.addEventListener('click', function () {
+      if (isAssigned) return;
       state.selectedOptionId = state.selectedOptionId === option.id ? null : option.id;
       renderGame();
     });
@@ -242,6 +275,10 @@ function renderGame() {
   state.promptItems.forEach(function (prompt, index) {
     const row = document.createElement('div');
     row.className = 'prompt-row';
+
+    const promptText = document.createElement('div');
+    promptText.className = 'prompt-text';
+    promptText.textContent = (index + 1) + '. ' + prompt.promptText;
 
     const slot = document.createElement('button');
     slot.className = 'target-slot';
@@ -299,12 +336,8 @@ function renderGame() {
       }
     });
 
-    const promptText = document.createElement('div');
-    promptText.className = 'prompt-text';
-    promptText.textContent = (index + 1) + '. ' + prompt.promptText;
-
-    row.appendChild(slot);
     row.appendChild(promptText);
+    row.appendChild(slot);
     promptList.appendChild(row);
   });
 
