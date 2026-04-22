@@ -103,7 +103,7 @@
       </div>
 
       <div id="gameArea" class="hidden">
-        <p class="match-instruction">Tap one item, then its match</p>
+        <p class="match-instruction">Tap one item on the left, then its match on the right</p>
         <div class="match-progress-text" id="progressText">0 / 0 matched</div>
         <div class="progress-wrap" aria-label="Progress">
           <div class="progress-bar" id="progressBar"></div>
@@ -113,15 +113,14 @@
           <div class="stat">Attempts: <span id="attemptCount">0</span></div>
           <div class="stat">Time: <span id="timer">0</span>s</div>
         </div>
-        <div class="notice warning mb-14">Tap one item on the left and one item on the right. Correct pairs lock in place.</div>
         <div class="game-grid">
           <svg id="matchLines" class="match-lines" aria-hidden="true"></svg>
-          <div class="match-column">
-            <h3 class="column-label">Match from here</h3>
+          <div class="match-column match-column-left">
+            <h3 class="column-label">Match FROM</h3>
             <div id="leftList" class="option-list"></div>
           </div>
-          <div class="match-column">
-            <h3 class="column-label">To here</h3>
+          <div class="match-column match-column-right">
+            <h3 class="column-label">Match TO</h3>
             <div id="rightList" class="option-list"></div>
           </div>
         </div>

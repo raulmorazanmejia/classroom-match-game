@@ -9,6 +9,30 @@ function shuffle(arr) {
   return copy;
 }
 
+function pairColorClass(pairNumber) {
+  if (!pairNumber) return '';
+  const paletteSize = 10;
+  const colorIndex = ((pairNumber - 1) % paletteSize) + 1;
+  return 'pair-color-' + colorIndex;
+}
+
+function pairStrokeColor(pairNumber) {
+  const colors = [
+    'rgba(59, 130, 246, 0.76)',
+    'rgba(217, 70, 239, 0.74)',
+    'rgba(34, 197, 94, 0.74)',
+    'rgba(245, 158, 11, 0.74)',
+    'rgba(244, 63, 94, 0.74)',
+    'rgba(99, 102, 241, 0.74)',
+    'rgba(6, 182, 212, 0.74)',
+    'rgba(249, 115, 22, 0.74)',
+    'rgba(139, 92, 246, 0.74)',
+    'rgba(236, 72, 153, 0.74)'
+  ];
+  if (!pairNumber) return 'rgba(16, 185, 129, 0.68)';
+  return colors[(pairNumber - 1) % colors.length];
+}
+
 const audioFx = {
   unlocked: false,
   initialized: false
@@ -122,7 +146,7 @@ function renderGame() {
   leftList.innerHTML = '';
   rightList.innerHTML = '';
 
-  state.leftItems.forEach(function (item) {
+  state.leftItems.forEach(function (item, index) {
     const btn = document.createElement('button');
     btn.className = 'match-btn';
     btn.dataset.pairId = String(item.pairId);
@@ -131,18 +155,24 @@ function renderGame() {
     if (state.matchedLeft.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashLeft === item.id) btn.classList.add('wrong');
     if (state.lastMatchedLeft === item.id) btn.classList.add('matched-pop');
+    if (state.lastMatchedLeft === item.id) btn.classList.add('match-glow');
     btn.textContent = item.text;
     if (state.matchedLeft.has(item.id)) {
       const pairTag = document.createElement('span');
-      pairTag.className = 'pair-tag';
-      pairTag.textContent = '#' + state.matchedPairOrder.get(item.pairId);
+      const pairNumber = state.matchedPairOrder.get(item.pairId);
+      pairTag.className = 'pair-tag ' + pairColorClass(pairNumber);
+      pairTag.textContent = '#' + pairNumber;
       btn.appendChild(pairTag);
+    }
+    if (!state.matchedLeft.size && !state.matchedRight.size) {
+      btn.style.animation = 'card-shuffle-in 280ms ease-out both';
+      btn.style.animationDelay = Math.min(index * 36, 240) + 'ms';
     }
     btn.addEventListener('click', function () { selectLeft(item.id); });
     leftList.appendChild(btn);
   });
 
-  state.rightItems.forEach(function (item) {
+  state.rightItems.forEach(function (item, index) {
     const btn = document.createElement('button');
     btn.className = 'match-btn';
     btn.dataset.pairId = String(item.pairId);
@@ -151,12 +181,18 @@ function renderGame() {
     if (state.matchedRight.has(item.id)) btn.classList.add('correct');
     if (state.wrongFlashRight === item.id) btn.classList.add('wrong');
     if (state.lastMatchedRight === item.id) btn.classList.add('matched-pop');
+    if (state.lastMatchedRight === item.id) btn.classList.add('match-glow');
     btn.textContent = item.text;
     if (state.matchedRight.has(item.id)) {
       const pairTag = document.createElement('span');
-      pairTag.className = 'pair-tag';
-      pairTag.textContent = '#' + state.matchedPairOrder.get(item.pairId);
+      const pairNumber = state.matchedPairOrder.get(item.pairId);
+      pairTag.className = 'pair-tag ' + pairColorClass(pairNumber);
+      pairTag.textContent = '#' + pairNumber;
       btn.appendChild(pairTag);
+    }
+    if (!state.matchedLeft.size && !state.matchedRight.size) {
+      btn.style.animation = 'card-shuffle-in 280ms ease-out both';
+      btn.style.animationDelay = Math.min(index * 36, 240) + 'ms';
     }
     btn.addEventListener('click', function () { selectRight(item.id); });
     rightList.appendChild(btn);
@@ -167,7 +203,7 @@ function renderGame() {
   const totalPairs = state.leftItems.length;
   const matchedPairs = state.matchedLeft.size;
   const progress = totalPairs ? Math.round((matchedPairs / totalPairs) * 100) : 0;
-  el('progressText').textContent = matchedPairs + ' / ' + totalPairs + ' matched • ' + progress + '%';
+  el('progressText').textContent = matchedPairs + ' / ' + totalPairs + ' matched';
   el('progressBar').style.width = progress + '%';
   drawMatchLines();
 }
@@ -181,7 +217,7 @@ function drawMatchLines() {
   svg.setAttribute('viewBox', '0 0 ' + rect.width + ' ' + rect.height);
   svg.innerHTML = '';
 
-  state.matchedPairOrder.forEach(function (_, pairId) {
+  state.matchedPairOrder.forEach(function (pairNumber, pairId) {
     const leftBtn = document.querySelector('.match-btn.correct[data-side="left"][data-pair-id="' + pairId + '"]');
     const rightBtn = document.querySelector('.match-btn.correct[data-side="right"][data-pair-id="' + pairId + '"]');
     if (!leftBtn || !rightBtn) return;
@@ -197,10 +233,10 @@ function drawMatchLines() {
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('d', 'M ' + x1 + ' ' + y1 + ' C ' + (x1 + bend) + ' ' + y1 + ', ' + (x2 - bend) + ' ' + y2 + ', ' + x2 + ' ' + y2);
     path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', 'rgba(16, 185, 129, 0.68)');
+    path.setAttribute('stroke', pairStrokeColor(pairNumber));
     path.setAttribute('stroke-width', '3');
     path.setAttribute('stroke-linecap', 'round');
-    path.style.filter = 'drop-shadow(0 0 6px rgba(16, 185, 129, 0.35))';
+    path.style.filter = 'drop-shadow(0 0 6px ' + pairStrokeColor(pairNumber).replace('0.74', '0.35').replace('0.76', '0.35') + ')';
     path.style.strokeDasharray = '8 5';
     path.style.animation = 'match-pop .45s ease-out';
     svg.appendChild(path);
