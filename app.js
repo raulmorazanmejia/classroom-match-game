@@ -200,6 +200,7 @@ function bindBaseEvents() {
   el('loadDemoBtn').addEventListener('click', loadDemo);
   el('backToDashboardBtn').addEventListener('click', function () { goRoute('dashboard'); });
   el('startGameBtn').addEventListener('click', startGame);
+  el('submitAssignmentBtn').addEventListener('click', submitAssignments);
   el('resultsBackBtn').addEventListener('click', function () { goRoute('dashboard'); });
   el('downloadCsvBtn').addEventListener('click', downloadCsv);
   el('closeFinishBtn').addEventListener('click', closeFinishOverlay);
