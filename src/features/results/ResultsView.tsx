@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { setRoute } from '../../lib/routes';
-import { getActivity, listSubmissions } from '../../lib/supabase';
+import { getActivity, listSubmissions } from '../../lib/supabase.ts';
 import type { Submission } from '../../types/models';
 
 type Props = { activityId: string };

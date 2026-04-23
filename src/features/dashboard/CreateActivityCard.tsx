@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { buildViewLink } from '../../lib/routes';
-import { createActivity } from '../../lib/supabase';
+import { createActivity } from '../../lib/supabase.ts';
 import type { Pair } from '../../types/models';
 import TeacherLinkQr from './TeacherLinkQr';
 

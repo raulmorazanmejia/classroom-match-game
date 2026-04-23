@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sharedAudio } from '../../lib/audio';
-import { getActivity, saveSubmission } from '../../lib/supabase';
+import { getActivity, saveSubmission } from '../../lib/supabase.ts';
 import type { Activity, AnswerOption, PromptItem } from '../../types/models';
 import AnswerBank from './AnswerBank';
 import PromptGrid from './PromptGrid';
