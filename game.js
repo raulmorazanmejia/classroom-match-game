@@ -22,8 +22,14 @@ const audioFx = {
   ctx: null
 };
 const DEFAULT_MATCH_COLUMNS = 2;
-const PHONE_WIDE_BREAKPOINT = 430;
-const TABLET_BREAKPOINT = 900;
+const MEDIUM_BREAKPOINT = 640;
+
+function noteFirstGameInteraction() {
+  if (state.hasInteracted) return;
+  state.hasInteracted = true;
+  const instructionEl = el('matchInstruction');
+  if (instructionEl) instructionEl.classList.add('hidden');
+}
 
 function updateAudioStatusLabel(isReady) {
   const statusEl = el('soundStatus');
@@ -84,8 +90,7 @@ function initGameAudio() {
 
 function getMatchColumns() {
   const width = window.innerWidth || document.documentElement.clientWidth || 375;
-  if (width >= TABLET_BREAKPOINT) return 4;
-  if (width >= PHONE_WIDE_BREAKPOINT) return 3;
+  if (width >= MEDIUM_BREAKPOINT) return 3;
   return 2;
 }
 
@@ -97,23 +102,14 @@ function updateMatchColumns() {
 }
 
 function testGameSound() {
-  const audioCtx = ensureAudioContext();
-  if (!audioCtx) {
-    updateAudioStatusLabel(false);
-    return;
-  }
-  audioCtx.resume().then(function () {
-    warmupAudioContext(audioCtx);
-    audioFx.unlocked = audioCtx.state === 'running';
-    console.log('test sound resume state:', audioCtx.state);
-    refreshAudioStatus();
-    if (audioFx.unlocked) playTone('correct');
-  }).catch(function () {
-    updateAudioStatusLabel(false);
-  });
+  playSharedSound('correct');
 }
 
 function playFeedbackSound(kind) {
+  playSharedSound(kind);
+}
+
+function playSharedSound(kind) {
   const audioCtx = ensureAudioContext();
   if (!audioCtx) return;
   audioCtx.resume().then(function () {
@@ -174,6 +170,7 @@ function resetGameState() {
   state.feedbackByPrompt = new Map();
   state.feedbackVisible = false;
   state.isSubmitted = false;
+  state.hasInteracted = false;
 
   if (state.timerInt) clearInterval(state.timerInt);
   state.timerInt = null;
@@ -183,6 +180,8 @@ function resetGameState() {
   el('timer').textContent = '0';
   el('progressBar').style.width = '0%';
   el('progressText').textContent = '0 / 0 assigned';
+  const instructionEl = el('matchInstruction');
+  if (instructionEl) instructionEl.classList.remove('hidden');
   setMessage('gameMessage', '', '');
 }
 
@@ -322,6 +321,7 @@ function renderGame() {
     });
     pill.addEventListener('click', function () {
       if (isAssigned) return;
+      noteFirstGameInteraction();
       state.selectedOptionId = state.selectedOptionId === option.id ? null : option.id;
       renderGame();
     });
@@ -376,11 +376,13 @@ function renderGame() {
       slot.classList.remove('drag-hover');
       const droppedOptionId = event.dataTransfer.getData('text/plain');
       if (!droppedOptionId) return;
+      noteFirstGameInteraction();
       state.selectedOptionId = droppedOptionId;
       assignSelectedOptionToPrompt(prompt.id);
     });
     slot.addEventListener('click', function () {
       if (state.selectedOptionId) {
+        noteFirstGameInteraction();
         assignSelectedOptionToPrompt(prompt.id);
         return;
       }
