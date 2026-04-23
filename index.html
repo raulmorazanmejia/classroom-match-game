@@ -11,9 +11,7 @@
   <div class="app-bg"></div>
   <main class="wrap">
     <header class="hero card">
-      <p class="eyebrow">Wordwall-Style Classroom Activity</p>
       <h1>Classroom Match Game</h1>
-      <p class="muted">Create activities, share links, and track results.</p>
       <nav class="topnav" id="nav"></nav>
     </header>
 
@@ -89,9 +87,7 @@
     </section>
 
     <section id="playView" class="card hidden">
-      <span class="pill">Student Activity</span>
       <h2 id="playTitle">Match Activity</h2>
-      <p class="muted">Match all items. Results save automatically when complete.</p>
 
       <div id="studentGate">
         <label for="studentName">Your Name</label>
@@ -103,9 +99,9 @@
       </div>
 
       <div id="gameArea" class="hidden">
-        <p class="match-instruction">Drag an answer into a slot, or tap an answer then tap a slot</p>
+        <p class="match-instruction" id="matchInstruction">Tap answer, then tap slot</p>
         <div class="audio-tools" aria-live="polite">
-          <button id="testSoundBtn" class="secondary" type="button">Test Sound</button>
+          <button id="testSoundBtn" class="secondary compact" type="button">Test Sound</button>
           <span id="soundStatus" class="sound-status">Sound blocked</span>
         </div>
         <div class="match-progress-text" id="progressText">0 / 0 assigned</div>

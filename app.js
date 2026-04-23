@@ -196,6 +196,16 @@ function bindBaseEvents() {
   el('loginBtn').addEventListener('click', handleLogin);
   el('createFromDashboardBtn').addEventListener('click', function () { goRoute('create'); });
   el('refreshDashboardBtn').addEventListener('click', loadDashboard);
+  const dashboardTable = el('dashboardTable');
+  if (dashboardTable && typeof deleteActivity === 'function') {
+    dashboardTable.addEventListener('click', function (event) {
+      const btn = event.target.closest('button[data-action="delete"][data-activity-id]');
+      if (!btn) return;
+      event.preventDefault();
+      event.stopPropagation();
+      deleteActivity(btn.dataset.activityId);
+    });
+  }
   el('generateLinksBtn').addEventListener('click', createActivity);
   el('loadDemoBtn').addEventListener('click', loadDemo);
   el('backToDashboardBtn').addEventListener('click', function () { goRoute('dashboard'); });

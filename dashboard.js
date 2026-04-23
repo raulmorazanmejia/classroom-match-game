@@ -58,12 +58,18 @@ async function copyToClipboard(text, okMessageId) {
   }
 }
 
-function buildActionLink(text, onClick) {
+function buildActionLink(text, onClick, meta) {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'secondary';
   btn.textContent = text;
-  btn.addEventListener('click', onClick);
+  btn.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    onClick(event);
+  });
+  if (meta && meta.action) btn.dataset.action = meta.action;
+  if (meta && meta.activityId) btn.dataset.activityId = meta.activityId;
   return btn;
 }
 
@@ -156,13 +162,13 @@ async function loadDashboard() {
     const actions = document.createElement('div');
     actions.className = 'action-links';
 
-    actions.appendChild(buildActionLink('Open Results', function () { goRoute('results', row.id); }));
-    actions.appendChild(buildActionLink('Open Student Link', function () { window.open(studentLink, '_blank', 'noopener,noreferrer'); }));
-    actions.appendChild(buildActionLink('Copy Student Link', function () { copyToClipboard(studentLink, 'dashboardMessage'); }));
-    actions.appendChild(buildActionLink('Copy Results Link', function () { copyToClipboard(resultsLink, 'dashboardMessage'); }));
-    actions.appendChild(buildActionLink('Duplicate', function () { duplicateActivity(row.id); }));
+    actions.appendChild(buildActionLink('Open Results', function () { goRoute('results', row.id); }, { action: 'results', activityId: row.id }));
+    actions.appendChild(buildActionLink('Open Student Link', function () { window.open(studentLink, '_blank', 'noopener,noreferrer'); }, { action: 'open-student', activityId: row.id }));
+    actions.appendChild(buildActionLink('Copy Student Link', function () { copyToClipboard(studentLink, 'dashboardMessage'); }, { action: 'copy-student', activityId: row.id }));
+    actions.appendChild(buildActionLink('Copy Results Link', function () { copyToClipboard(resultsLink, 'dashboardMessage'); }, { action: 'copy-results', activityId: row.id }));
+    actions.appendChild(buildActionLink('Duplicate', function () { duplicateActivity(row.id); }, { action: 'duplicate', activityId: row.id }));
 
-    const deleteBtn = buildActionLink('Delete', function () { deleteActivity(row.id); });
+    const deleteBtn = buildActionLink('Delete', function () {}, { action: 'delete', activityId: row.id });
     deleteBtn.classList.add('danger');
     deleteBtn.classList.remove('secondary');
     actions.appendChild(deleteBtn);
