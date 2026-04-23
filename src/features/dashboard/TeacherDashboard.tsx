@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { buildViewLink, setRoute } from '../../lib/routes';
-import { deleteActivityAndSubmissions, listActivities } from '../../lib/supabase';
+import { deleteActivityAndSubmissions, listActivities } from '../../lib/supabase.ts';
 import type { Activity } from '../../types/models';
 import TeacherLinkQr from './TeacherLinkQr';
 
