@@ -32,6 +32,11 @@ export default function App() {
   return (
     <main className="mx-auto min-h-screen w-full max-w-5xl p-3">
       <div className="mb-3 rounded-2xl bg-white/70 px-3 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-slate-100">Classroom Match v2</div>
+      {route.view === 'create' ? (
+        <div className="mb-3 flex justify-end">
+          <button onClick={() => setRoute('dashboard')} className="rounded-lg bg-slate-200 px-3 py-1 text-sm text-slate-900">Back to Dashboard</button>
+        </div>
+      ) : null}
       {route.view === 'play' && route.id ? <AssignmentPlayer activityId={route.id} columns={columns} /> : null}
       {route.view === 'results' && route.id ? <ResultsView activityId={route.id} /> : null}
       {route.view === 'create' ? <CreateActivityCard teacherName={session.teacherName || 'Teacher'} onCreated={() => setRefreshToken((x) => x + 1)} /> : null}
