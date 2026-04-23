@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GLOBAL_TEACHER_PASSWORD } from '../../lib/supabase';
+import { GLOBAL_TEACHER_PASSWORD } from './constants';
 
 type Props = { onLogin: (teacherName: string) => void };
 

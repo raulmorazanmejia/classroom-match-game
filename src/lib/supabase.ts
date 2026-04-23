@@ -1,9 +1,9 @@
 import { createClient } from '@supabase/supabase-js';
+import { GLOBAL_TEACHER_PASSWORD } from '../features/auth/constants';
 import type { Activity, Pair, Submission } from '../types/models';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://cpouyxzsnmoiskxhrcut.supabase.co';
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_7y7O2Q93oG9iRqSlNAudXA_L1gbvzra';
-export const GLOBAL_TEACHER_PASSWORD = 'intel123';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
