@@ -7,22 +7,33 @@ export const GLOBAL_TEACHER_PASSWORD = 'intel123';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+function withSafeTitle(activity: Partial<Activity>): Activity {
+  const trimmed = (activity.title ?? '').trim();
+  const fallbackFromPair = activity.pairs?.[0]?.left?.trim();
+  return {
+    ...(activity as Activity),
+    title: trimmed || fallbackFromPair || 'Untitled Activity'
+  };
+}
+
 export async function listActivities(): Promise<Activity[]> {
   const { data, error } = await supabase.from('activities').select('id,title,teacher_name,teacher_password,pairs,created_at').order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Activity[];
+  return ((data ?? []) as Activity[]).map(withSafeTitle);
 }
 
 export async function getActivity(activityId: string): Promise<Activity> {
   const { data, error } = await supabase.from('activities').select('id,title,teacher_name,teacher_password,pairs,created_at').eq('id', activityId).single();
   if (error) throw error;
-  return data as Activity;
+  return withSafeTitle(data as Activity);
 }
 
 export async function createActivity(payload: { title: string; teacherName: string; pairs: Pair[] }): Promise<Activity> {
-  const { data, error } = await supabase.from('activities').insert([{ title: payload.title, teacher_name: payload.teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: payload.pairs }]).select('id,title,teacher_name,teacher_password,pairs,created_at').single();
+  const safeTitle = payload.title.trim();
+  if (!safeTitle) throw new Error('Please enter an activity title.');
+  const { data, error } = await supabase.from('activities').insert([{ title: safeTitle, teacher_name: payload.teacherName, teacher_password: GLOBAL_TEACHER_PASSWORD, pairs: payload.pairs }]).select('id,title,teacher_name,teacher_password,pairs,created_at').single();
   if (error) throw error;
-  return data as Activity;
+  return withSafeTitle(data as Activity);
 }
 
 export async function deleteActivityAndSubmissions(activityId: string): Promise<void> {
