@@ -22,6 +22,8 @@ const audioFx = {
   ctx: null
 };
 const DEFAULT_MATCH_COLUMNS = 2;
+const PHONE_WIDE_BREAKPOINT = 430;
+const TABLET_BREAKPOINT = 900;
 
 function updateAudioStatusLabel(isReady) {
   const statusEl = el('soundStatus');
@@ -80,6 +82,20 @@ function initGameAudio() {
   });
 }
 
+function getMatchColumns() {
+  const width = window.innerWidth || document.documentElement.clientWidth || 375;
+  if (width >= TABLET_BREAKPOINT) return 4;
+  if (width >= PHONE_WIDE_BREAKPOINT) return 3;
+  return 2;
+}
+
+function updateMatchColumns() {
+  const nextColumns = getMatchColumns();
+  if (state.matchColumns === nextColumns) return;
+  state.matchColumns = nextColumns;
+  if (!el('gameArea').classList.contains('hidden')) renderGame();
+}
+
 function testGameSound() {
   const audioCtx = ensureAudioContext();
   if (!audioCtx) {
@@ -100,15 +116,15 @@ function testGameSound() {
 function playFeedbackSound(kind) {
   const audioCtx = ensureAudioContext();
   if (!audioCtx) return;
-  if (!audioFx.unlocked || audioCtx.state !== 'running') {
-    audioCtx.resume().then(function () {
-      audioFx.unlocked = audioCtx.state === 'running';
-      if (!audioFx.unlocked) return;
-      playTone(kind);
-    }).catch(function () {});
-    return;
-  }
-  playTone(kind);
+  audioCtx.resume().then(function () {
+    warmupAudioContext(audioCtx);
+    audioFx.unlocked = audioCtx.state === 'running';
+    refreshAudioStatus();
+    if (!audioFx.unlocked) return;
+    playTone(kind);
+  }).catch(function () {
+    updateAudioStatusLabel(false);
+  });
 }
 
 function playTone(kind) {
@@ -188,7 +204,7 @@ function startGame() {
   state.answerOptions = shuffle(state.activity.pairs.map(function (pair, index) {
     return { id: 'O' + index, pairId: index, answerText: pair.right };
   }));
-  state.matchColumns = DEFAULT_MATCH_COLUMNS;
+  state.matchColumns = getMatchColumns();
 
   state.startTs = Date.now();
   state.timerInt = setInterval(function () {
@@ -314,8 +330,8 @@ function renderGame() {
   });
 
   state.promptItems.forEach(function (prompt, index) {
-    const row = document.createElement('div');
-    row.className = 'prompt-row';
+    const cell = document.createElement('div');
+    cell.className = 'prompt-cell';
 
     const slot = document.createElement('button');
     slot.className = 'target-slot';
@@ -373,12 +389,12 @@ function renderGame() {
       }
     });
 
-    row.appendChild(slot);
+    cell.appendChild(slot);
     const promptText = document.createElement('div');
     promptText.className = 'prompt-text';
     promptText.textContent = (index + 1) + '. ' + prompt.promptText;
-    row.appendChild(promptText);
-    promptList.appendChild(row);
+    cell.appendChild(promptText);
+    promptList.appendChild(cell);
   });
 
   const total = state.promptItems.length;
@@ -431,3 +447,5 @@ function playAgain() {
   el('studentName').value = state.studentName;
   resetGameState();
 }
+
+window.addEventListener('resize', updateMatchColumns);
