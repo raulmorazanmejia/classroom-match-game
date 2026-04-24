@@ -1,12 +1,14 @@
 const SOUND_PROFILE = {
-  correct: { frequency: 900, duration: 0.12 },
-  wrong: { frequency: 220, duration: 0.2 },
-  place: { frequency: 560, duration: 0.1 }
+  correct: { frequency: 1320, duration: 0.24, gain: 0.34, wave: 'triangle' },
+  wrong: { frequency: 180, duration: 0.38, gain: 0.32, wave: 'square' },
+  place: { frequency: 880, duration: 0.3, gain: 0.36, wave: 'triangle' },
+  test: { frequency: 1040, duration: 0.6, gain: 0.5, wave: 'square' }
 };
 
 class SharedAudioEngine {
   ctx = null;
   unlocked = false;
+  lastFallbackUsed = 'none';
 
   ensure() {
     if (this.ctx) return this.ctx;
@@ -24,24 +26,48 @@ class SharedAudioEngine {
     return this.unlocked;
   }
 
+  runSpeechFallback(kind) {
+    if (!window.speechSynthesis) {
+      this.lastFallbackUsed = 'none';
+      return;
+    }
+    const utterance = new SpeechSynthesisUtterance(kind === 'test' ? 'Audio test. If you hear this, sound fallback is working.' : 'beep');
+    utterance.volume = 1;
+    utterance.rate = 1;
+    utterance.pitch = kind === 'wrong' ? 0.6 : 1.5;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utterance);
+    this.lastFallbackUsed = 'speech';
+  }
+
   async play(kind) {
     const ctx = this.ensure();
-    if (!ctx) return;
+    const { frequency, duration, gain: targetGain, wave } = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
+    this.lastFallbackUsed = 'none';
+    if (!ctx) {
+      this.runSpeechFallback(kind);
+      return;
+    }
     if (!this.unlocked) await this.unlock();
-    if (!this.unlocked) return;
+    if (!this.unlocked) {
+      this.runSpeechFallback(kind);
+      return;
+    }
 
-    const { frequency, duration } = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sine';
+    osc.type = wave;
     osc.frequency.value = frequency;
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.14, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.03);
     gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + duration);
+    if (kind === 'test') {
+      window.setTimeout(() => this.runSpeechFallback(kind), 650);
+    }
   }
 }
 

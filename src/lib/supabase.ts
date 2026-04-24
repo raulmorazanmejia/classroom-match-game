@@ -53,7 +53,19 @@ export async function deleteActivityAndSubmissions(activityId: string, teacherPa
     body: JSON.stringify({ activityId, teacherPassword })
   });
 
-  const payload = (await response.json()) as DeleteActivityResponse;
+  const rawBody = await response.text();
+  let payload: DeleteActivityResponse | null = null;
+  try {
+    payload = JSON.parse(rawBody) as DeleteActivityResponse;
+  } catch {
+    payload = null;
+  }
+
+  if (!payload) {
+    const nonJsonMessage = rawBody?.trim() || `Non-JSON response (HTTP ${response.status})`;
+    throw new Error(nonJsonMessage);
+  }
+
   if (!response.ok || !payload.success) {
     throw new Error(payload.error || `Delete failed for ${activityId}.`);
   }
