@@ -37,8 +37,16 @@ export async function createActivity(payload: { title: string; teacherName: stri
 }
 
 export async function deleteActivityAndSubmissions(activityId: string): Promise<void> {
+  if (!activityId) throw new Error('Missing activity id for delete.');
+
   const { error: submissionErr } = await supabase.from('submissions').delete().eq('activity_id', activityId);
-  if (submissionErr) throw submissionErr;
+  if (submissionErr) {
+    const submissionDeleteDenied = /permission|policy/i.test(submissionErr.message || '');
+    if (!submissionDeleteDenied) throw submissionErr;
+    // Continue; activity delete may still succeed via cascade or no related rows.
+    console.warn('[supabase] submissions delete warning', { activityId, message: submissionErr.message });
+  }
+
   const { error: activityErr } = await supabase.from('activities').delete().eq('id', activityId);
   if (activityErr) throw activityErr;
 }

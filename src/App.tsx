@@ -26,14 +26,14 @@ export default function App() {
   };
 
   if (!session.loggedIn && route.view !== 'play') {
-    return <main className="mx-auto min-h-screen w-full max-w-5xl p-3"><TeacherLogin onLogin={(name) => { login(name); setRoute('dashboard'); }} /></main>;
+    return <main className="mx-auto min-h-screen w-full max-w-5xl p-2.5"><TeacherLogin onLogin={(name) => { login(name); setRoute('dashboard'); }} /></main>;
   }
 
   return (
-    <main className="mx-auto min-h-screen w-full max-w-5xl p-3">
-      <div className="mb-3 rounded-2xl bg-white/70 px-3 py-2 text-xs text-slate-600 shadow-sm ring-1 ring-slate-100">Classroom Match v2</div>
+    <main className="mx-auto min-h-screen w-full max-w-5xl p-2.5">
+      <div className="mb-2 rounded-2xl bg-white/70 px-3 py-1.5 text-xs text-slate-600 shadow-sm ring-1 ring-slate-100">Classroom Match v2</div>
       {route.view === 'create' ? (
-        <div className="mb-3 flex justify-end">
+        <div className="mb-2 flex justify-end">
           <button onClick={() => setRoute('dashboard')} className="rounded-lg bg-slate-200 px-3 py-1 text-sm text-slate-900">Back to Dashboard</button>
         </div>
       ) : null}

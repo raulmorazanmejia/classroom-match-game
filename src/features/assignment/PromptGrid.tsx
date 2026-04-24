@@ -11,14 +11,14 @@ type SlotProps = {
 
 function PromptSlot({ prompt, assignedOption, isOver, onTapAssign, onClear }: SlotProps) {
   return (
-    <div onClick={onTapAssign} className={`min-h-28 rounded-2xl border-2 p-3 transition ${isOver ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}>
+    <div onClick={onTapAssign} className={`min-h-24 rounded-2xl border-2 p-2.5 transition ${isOver ? 'border-amber-400 bg-amber-50' : 'border-slate-200 bg-white'}`}>
       <p className="text-xs font-bold uppercase tracking-wide text-slate-500">{prompt.promptText}</p>
       {assignedOption ? (
         <button type="button" onClick={(e) => { e.stopPropagation(); onClear(); }} className={`mt-2 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-white shadow-sm ${assignedOption.colorClass}`}>
           <span className="whitespace-normal break-words">{assignedOption.answerText}</span>
         </button>
       ) : (
-        <p className="mt-3 text-sm text-slate-400">Drop or tap to assign</p>
+        <p className="mt-2 text-sm text-slate-400">Drop or tap to assign</p>
       )}
     </div>
   );
