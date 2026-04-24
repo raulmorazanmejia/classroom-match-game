@@ -1,35 +1,65 @@
-const SOUND_PROFILE = {
-  correct: { frequency: 1320, duration: 0.24, gain: 0.34, wave: 'triangle' as OscillatorType },
-  wrong: { frequency: 180, duration: 0.38, gain: 0.32, wave: 'square' as OscillatorType },
-  place: { frequency: 880, duration: 0.3, gain: 0.36, wave: 'triangle' as OscillatorType },
-  test: { frequency: 1040, duration: 0.6, gain: 0.5, wave: 'square' as OscillatorType }
+const SOUND_FILES = {
+  start: '/sounds/start.mp3',
+  place: '/sounds/place.mp3',
+  correct: '/sounds/correct.mp3',
+  wrong: '/sounds/wrong.mp3',
+  complete: '/sounds/complete.mp3',
+  test: '/sounds/start.mp3'
 } as const;
 
-type SoundKind = keyof typeof SOUND_PROFILE;
+type SoundKind = keyof typeof SOUND_FILES;
 
 type AudioDiagnostics = {
-  contextState: AudioContextState | 'unavailable' | 'not-created';
   soundEnabled: boolean;
+  armed: boolean;
+  needsRearm: boolean;
   lastSoundPlayed: SoundKind | 'none';
   lastEvent: string;
   lastError: string;
-  lastGain: number;
-  lastDuration: number;
-  lastFrequency: number;
-  lastFallbackUsed: 'none' | 'speech';
+  lastFallbackUsed: 'none' | 'oscillator';
 };
 
 class SharedAudioEngine {
-  private ctx: AudioContext | null = null;
   private unlocked = false;
+  private needsRearm = false;
   private lastSoundPlayed: SoundKind | 'none' = 'none';
   private lastEvent = 'idle';
   private lastError = 'none';
-  private lastGain = 0;
-  private lastDuration = 0;
-  private lastFrequency = 0;
-  private lastFallbackUsed: 'none' | 'speech' = 'none';
+  private lastFallbackUsed: 'none' | 'oscillator' = 'none';
   private listeners = new Set<(snapshot: AudioDiagnostics) => void>();
+  private preloaded = new Map<SoundKind, HTMLAudioElement>();
+
+  constructor() {
+    if (typeof window !== 'undefined') {
+      document.addEventListener('visibilitychange', this.handleVisibilityChange);
+      window.addEventListener('pageshow', this.handlePageShow);
+      window.addEventListener('focus', this.handleWindowFocus);
+    }
+  }
+
+  private handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden') {
+      this.needsRearm = true;
+      this.lastEvent = 'page hidden; audio will re-arm on next tap';
+      this.emit();
+    }
+  };
+
+  private handlePageShow = (event: PageTransitionEvent) => {
+    if (event.persisted) {
+      this.needsRearm = true;
+      this.lastEvent = 'page restored from cache; audio re-arm required';
+      this.emit();
+    }
+  };
+
+  private handleWindowFocus = () => {
+    if (document.visibilityState === 'visible') {
+      this.needsRearm = true;
+      this.lastEvent = 'window focus restored; audio may need re-arm';
+      this.emit();
+    }
+  };
 
   private emit() {
     const snapshot = this.getDiagnostics();
@@ -46,133 +76,112 @@ class SharedAudioEngine {
 
   getDiagnostics(): AudioDiagnostics {
     return {
-      contextState: this.ctx ? this.ctx.state : 'not-created',
       soundEnabled: this.unlocked,
+      armed: this.unlocked && !this.needsRearm,
+      needsRearm: this.needsRearm,
       lastSoundPlayed: this.lastSoundPlayed,
       lastEvent: this.lastEvent,
       lastError: this.lastError,
-      lastGain: this.lastGain,
-      lastDuration: this.lastDuration,
-      lastFrequency: this.lastFrequency,
       lastFallbackUsed: this.lastFallbackUsed
     };
   }
 
-  private ensure(): AudioContext | null {
-    if (this.ctx) return this.ctx;
-    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioContextClass) {
-      this.lastError = 'AudioContext unavailable on this device/browser.';
-      this.lastEvent = 'AudioContext unavailable on this device/browser.';
-      this.emit();
-      return null;
-    }
-    this.ctx = new AudioContextClass();
-    this.lastEvent = 'AudioContext created.';
+  private ensurePreloaded(kind: SoundKind): HTMLAudioElement {
+    const existing = this.preloaded.get(kind);
+    if (existing) return existing;
+
+    const audio = new Audio(SOUND_FILES[kind]);
+    audio.preload = 'auto';
+    audio.load();
+    this.preloaded.set(kind, audio);
+    return audio;
+  }
+
+  private preloadAll(): void {
+    (Object.keys(SOUND_FILES) as SoundKind[]).forEach((kind) => {
+      this.ensurePreloaded(kind);
+    });
+    this.lastEvent = 'sound files preloaded';
     this.emit();
-    return this.ctx;
   }
 
   async resumeForGesture(source: string): Promise<boolean> {
-    const ctx = this.ensure();
-    if (!ctx) return false;
-    try {
-      await ctx.resume();
-      this.unlocked = ctx.state === 'running';
-      this.lastError = this.unlocked ? 'none' : `AudioContext resume did not reach running state (state=${ctx.state}).`;
-      this.lastEvent = `${source}: resume ${this.unlocked ? 'succeeded' : `ended in ${ctx.state}`}`;
-    } catch (error) {
-      this.unlocked = false;
-      const message = (error as Error).message || 'unknown error';
-      this.lastError = `${source}: resume failed (${message})`;
-      this.lastEvent = `${source}: resume failed (${message})`;
-    }
+    this.unlocked = true;
+    this.needsRearm = false;
+    this.lastError = 'none';
+    this.lastEvent = `${source}: audio armed via user gesture`;
+    this.preloadAll();
     this.emit();
-    return this.unlocked;
+    return true;
   }
 
   async unlock(): Promise<boolean> {
     return this.resumeForGesture('unlock');
   }
 
-  private runSpeechFallback(kind: SoundKind, reason: string): void {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      this.lastError = `${reason} + fallback unavailable (speechSynthesis not supported).`;
-      this.lastEvent = `play:${kind} fallback unavailable`;
+  async armAndPrime(source: string): Promise<boolean> {
+    return this.resumeForGesture(source);
+  }
+
+  private runOscillatorFallback(reason: string): void {
+    const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextClass) {
       this.lastFallbackUsed = 'none';
+      this.lastError = `${reason} + no AudioContext fallback`;
+      this.lastEvent = 'audio failed; no fallback available';
       this.emit();
       return;
     }
 
     try {
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(kind === 'test' ? 'Audio test. If you hear this, sound fallback is working.' : 'beep');
-      utterance.volume = 1;
-      utterance.rate = 1;
-      utterance.pitch = kind === 'wrong' ? 0.6 : 1.5;
-      window.speechSynthesis.speak(utterance);
-      this.lastFallbackUsed = 'speech';
-      this.lastEvent = `play:${kind} fallback speech emitted (${reason})`;
+      const ctx = new AudioContextClass();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.18);
+      this.lastFallbackUsed = 'oscillator';
       this.lastError = reason;
+      this.lastEvent = 'audio fallback beep emitted';
+      window.setTimeout(() => void ctx.close(), 300);
       this.emit();
     } catch (error) {
-      const message = (error as Error).message || 'unknown error';
       this.lastFallbackUsed = 'none';
-      this.lastError = `${reason} + speech fallback failed (${message})`;
-      this.lastEvent = `play:${kind} fallback failed (${message})`;
+      this.lastError = `${reason}; fallback failed: ${(error as Error).message || 'unknown'}`;
+      this.lastEvent = 'audio + fallback failed';
       this.emit();
     }
   }
 
   async play(kind: SoundKind): Promise<void> {
-    const ctx = this.ensure();
-    const profile = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
-    this.lastFrequency = profile.frequency;
-    this.lastDuration = profile.duration;
-    this.lastGain = profile.gain;
-    this.lastFallbackUsed = 'none';
-
-    if (!ctx) {
-      this.runSpeechFallback(kind, 'AudioContext unavailable');
-      return;
-    }
-
-    if (ctx.state !== 'running') {
-      await this.resumeForGesture(`play:${kind}`);
-    }
-    if (ctx.state !== 'running') {
-      this.runSpeechFallback(kind, `play:${kind} blocked because AudioContext state is ${ctx.state}. iPhone/Safari requires a direct tap gesture.`);
+    if (!this.unlocked || this.needsRearm) {
+      this.lastEvent = `play:${kind} blocked until next user gesture`;
+      this.lastError = 'audio not armed';
+      this.emit();
       return;
     }
 
     try {
-      const { frequency, duration, gain: targetGain, wave } = profile;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = wave;
-      osc.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + duration);
-
-      this.unlocked = true;
-      this.lastError = 'none';
+      const base = this.ensurePreloaded(kind);
+      const clip = base.cloneNode(true) as HTMLAudioElement;
+      clip.currentTime = 0;
+      await clip.play();
+      this.lastFallbackUsed = 'none';
       this.lastSoundPlayed = kind;
-      this.lastEvent = `play:${kind} emitted (${frequency}Hz/${duration}s/gain=${targetGain}).`;
+      this.lastError = 'none';
+      this.lastEvent = `play:${kind} file played`;
       this.emit();
-
-      if (kind === 'test') {
-        window.setTimeout(() => {
-          this.runSpeechFallback(kind, 'WebAudio played; speech fallback fired for audibility check');
-        }, 650);
-      }
     } catch (error) {
       const message = (error as Error).message || 'unknown error';
-      this.runSpeechFallback(kind, `play:${kind} failed (${message})`);
+      this.lastError = `play:${kind} failed (${message})`;
+      this.lastEvent = `play:${kind} failed; using placeholder`;
+      this.runOscillatorFallback(`Missing or blocked audio file for ${kind}`);
     }
   }
 }

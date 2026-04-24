@@ -7,12 +7,16 @@ import AnswerBank from './AnswerBank';
 import PromptGrid from './PromptGrid';
 
 const TILE_COLORS = ['bg-fuchsia-500', 'bg-violet-500', 'bg-blue-500', 'bg-cyan-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
+const COUNTDOWN_SEQUENCE = ['3', '2', '1', 'Ready?'];
+const SHOW_AUDIO_DEBUG = new URLSearchParams(window.location.search).get('debugAudio') === '1';
 
 function shuffle<T>(items: T[]): T[] { const next = [...items]; for (let i = next.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1)); [next[i], next[j]] = [next[j], next[i]]; } return next; }
 
 export default function AssignmentPlayer({ activityId, columns }: { activityId: string; columns: number }) {
   const [studentName, setStudentName] = useState('');
   const [started, setStarted] = useState(false);
+  const [launching, setLaunching] = useState(false);
+  const [countdownText, setCountdownText] = useState(COUNTDOWN_SEQUENCE[0]);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [prompts, setPrompts] = useState<PromptItem[]>([]);
   const [options, setOptions] = useState<AnswerOption[]>([]);
@@ -37,7 +41,7 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
         const data = await getActivity(activityId);
         const promptList = data.pairs.map((pair, i) => ({ id: `P${i}`, pairId: i, promptText: pair.left }));
         const optionList = shuffle(data.pairs.map((pair, i) => ({ id: `O${i}`, pairId: i, answerText: pair.right, colorClass: TILE_COLORS[i % TILE_COLORS.length] })));
-        setActivity(data); setPrompts(promptList); setOptions(optionList); setStatus('Ready. Enter name to start.');
+        setActivity(data); setPrompts(promptList); setOptions(optionList); setStatus('Enter your name to begin.');
       } catch (error) { setStatus((error as Error).message || 'Failed to load activity'); }
     }; void load();
   }, [activityId]);
@@ -55,37 +59,122 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
     await sharedAudio.play('place');
   };
 
+  const startLaunchSequence = async () => {
+    if (!studentName.trim()) {
+      setStatus('Please enter your name.');
+      return;
+    }
+
+    await sharedAudio.armAndPrime('start-activity');
+    await sharedAudio.play('start');
+
+    setLaunching(true);
+    setStatus('Get ready...');
+
+    COUNTDOWN_SEQUENCE.forEach((text, index) => {
+      window.setTimeout(() => {
+        setCountdownText(text);
+        if (index === COUNTDOWN_SEQUENCE.length - 1) {
+          window.setTimeout(() => {
+            setLaunching(false);
+            setStarted(true);
+            setStartTs(Date.now());
+            setStatus('Match the answers to the prompts.');
+          }, 260);
+        }
+      }, index * 420);
+    });
+  };
+
   const submit = async () => {
     setAttempts((prev) => prev + 1);
-    if (Object.keys(assignments).length !== prompts.length) { await sharedAudio.play('wrong'); setStatus('Assign every prompt before submit.'); return; }
+    if (Object.keys(assignments).length !== prompts.length) {
+      await sharedAudio.play('wrong');
+      setStatus('Assign every prompt before submit.');
+      return;
+    }
+
     let correct = 0;
     prompts.forEach((prompt) => { const option = optionsById[assignments[prompt.id]]; if (option?.pairId === prompt.pairId) correct += 1; });
+
     try {
-      await saveSubmission({ activity_id: activityId, student_name: studentName || 'Student', score: correct, total: prompts.length, attempts: attempts + 1, duration_seconds: Math.floor((Date.now() - startTs) / 1000) });
-      await sharedAudio.play(correct === prompts.length ? 'correct' : 'wrong');
+      await saveSubmission({
+        activity_id: activityId,
+        student_name: studentName || 'Student',
+        score: correct,
+        total: prompts.length,
+        attempts: attempts + 1,
+        duration_seconds: Math.floor((Date.now() - startTs) / 1000)
+      });
+      await sharedAudio.play(correct === prompts.length ? 'complete' : 'wrong');
       setStatus(`Submitted: ${correct}/${prompts.length}`);
-    } catch (error) { setStatus((error as Error).message || 'Submit failed'); }
+    } catch (error) {
+      setStatus((error as Error).message || 'Submit failed');
+    }
   };
 
   if (!started) {
-    return <section className="space-y-3 rounded-3xl bg-white p-4 shadow-md ring-1 ring-indigo-100"><h1 className="text-xl font-bold text-slate-900">{activity?.title ?? 'Assignment'}</h1><p className="text-sm text-slate-600">{status}</p><input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter your name" className="w-full rounded-xl border px-3 py-2 text-slate-900" /><div className="flex gap-2"><button onClick={() => { if (!studentName.trim()) { setStatus('Please enter your name.'); return; } void sharedAudio.resumeForGesture('start-activity'); setStarted(true); setStartTs(Date.now()); }} className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white">Start Activity</button><button className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-semibold text-white" onClick={async () => { await sharedAudio.resumeForGesture('test-sound-before-start'); await sharedAudio.play('test'); }}>Test Sound (Loud)</button></div><div className="rounded-xl bg-slate-50 px-2 py-1.5 text-[11px] text-slate-700 ring-1 ring-slate-200"><p><span className="font-semibold">AudioContext:</span> {audioDiagnostics.contextState}</p><p><span className="font-semibold">Sound enabled:</span> {audioDiagnostics.soundEnabled ? 'yes' : 'no'}</p><p><span className="font-semibold">Last sound event:</span> {audioDiagnostics.lastEvent}</p><p><span className="font-semibold">Last audio error:</span> {audioDiagnostics.lastError}</p><p><span className="font-semibold">Gain / Duration / Frequency:</span> {audioDiagnostics.lastGain} / {audioDiagnostics.lastDuration}s / {audioDiagnostics.lastFrequency}Hz</p><p><span className="font-semibold">Fallback path used:</span> {audioDiagnostics.lastFallbackUsed}</p><p className="text-[10px] text-slate-600">Note: iPhone Code Scanner webviews may suppress audio output. Open the same link directly in Safari for reliable audio.</p></div></section>;
+    return (
+      <section className="relative overflow-hidden rounded-3xl bg-white p-5 shadow-md ring-1 ring-indigo-100">
+        <div className={`mx-auto max-w-xl text-center transition duration-300 ${launching ? 'pointer-events-none scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Classroom Match</p>
+          <h1 className="mt-2 text-3xl font-extrabold text-slate-900">{activity?.title ?? 'Assignment'}</h1>
+          <p className="mt-3 text-sm text-slate-600">Match the answers to the prompts.</p>
+          <input
+            value={studentName}
+            onChange={(e) => setStudentName(e.target.value)}
+            placeholder="Enter your name"
+            className="mx-auto mt-4 w-full max-w-sm rounded-2xl border border-indigo-200 px-4 py-3 text-center text-base text-slate-900 shadow-sm focus:border-indigo-400 focus:outline-none"
+          />
+          <button
+            onClick={() => { void startLaunchSequence(); }}
+            className="mt-4 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 px-10 py-4 text-lg font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:brightness-110"
+          >
+            Start
+          </button>
+          <p className="mt-3 text-xs text-slate-500">{status}</p>
+
+          {SHOW_AUDIO_DEBUG ? (
+            <div className="mx-auto mt-4 max-w-sm rounded-xl bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-700 ring-1 ring-slate-200">
+              <p><span className="font-semibold">Sound enabled:</span> {audioDiagnostics.soundEnabled ? 'yes' : 'no'}</p>
+              <p><span className="font-semibold">Needs re-arm:</span> {audioDiagnostics.needsRearm ? 'yes' : 'no'}</p>
+              <p><span className="font-semibold">Last sound:</span> {audioDiagnostics.lastSoundPlayed}</p>
+              <p><span className="font-semibold">Last event:</span> {audioDiagnostics.lastEvent}</p>
+              <p><span className="font-semibold">Last error:</span> {audioDiagnostics.lastError}</p>
+              <p><span className="font-semibold">Fallback:</span> {audioDiagnostics.lastFallbackUsed}</p>
+            </div>
+          ) : null}
+        </div>
+
+        {launching ? (
+          <div className="launch-overlay absolute inset-0 flex flex-col items-center justify-center bg-indigo-950/85 text-white">
+            <div className="launch-card rounded-3xl bg-white/10 px-9 py-7 text-center shadow-2xl ring-1 ring-white/25 backdrop-blur-sm">
+              <p className="text-xs uppercase tracking-[0.25em] text-indigo-100">Get set</p>
+              <p key={countdownText} className="launch-count mt-2 text-5xl font-black">{countdownText}</p>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    );
   }
 
   return (
     <section onPointerDown={() => { void sharedAudio.resumeForGesture('pointerdown'); }} className="space-y-2.5 rounded-3xl bg-gradient-to-b from-indigo-50 via-cyan-50 to-emerald-50 p-2.5 shadow-md ring-1 ring-indigo-100">
-      <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1><button className="rounded-lg bg-indigo-700 px-2.5 py-1.5 text-xs font-semibold text-white" onClick={async () => { await sharedAudio.resumeForGesture('test-sound-button'); await sharedAudio.play('test'); }}>Test Sound (Loud)</button></div>
+      <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1></div>
       <div className="flex items-center justify-between"><p className="text-sm text-slate-700">Student: <span className="font-semibold">{studentName}</span></p><button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-emerald-500" onClick={() => { void sharedAudio.resumeForGesture('submit-click'); void submit(); }}>Submit</button></div>
       <p className="text-xs text-slate-600">{status}</p>
-      <div className="rounded-xl bg-white/75 px-2 py-1.5 text-[11px] text-slate-700 ring-1 ring-slate-200">
-        <p><span className="font-semibold">AudioContext:</span> {audioDiagnostics.contextState}</p>
-        <p><span className="font-semibold">Sound enabled:</span> {audioDiagnostics.soundEnabled ? 'yes' : 'no'}</p>
-        <p><span className="font-semibold">Last sound played:</span> {audioDiagnostics.lastSoundPlayed}</p>
-        <p><span className="font-semibold">Audio event:</span> {audioDiagnostics.lastEvent}</p>
-        <p><span className="font-semibold">Last audio error:</span> {audioDiagnostics.lastError}</p>
-        <p><span className="font-semibold">Gain / Duration / Frequency:</span> {audioDiagnostics.lastGain} / {audioDiagnostics.lastDuration}s / {audioDiagnostics.lastFrequency}Hz</p>
-        <p><span className="font-semibold">Fallback path used:</span> {audioDiagnostics.lastFallbackUsed}</p>
-        <p className="text-[10px] text-slate-600">Code Scanner can suppress sound; open the same activity URL directly in Safari for full audio playback.</p>
-      </div>
+
+      {SHOW_AUDIO_DEBUG ? (
+        <div className="rounded-xl bg-white/75 px-2 py-1.5 text-[11px] text-slate-700 ring-1 ring-slate-200">
+          <p><span className="font-semibold">Sound enabled:</span> {audioDiagnostics.soundEnabled ? 'yes' : 'no'}</p>
+          <p><span className="font-semibold">Needs re-arm:</span> {audioDiagnostics.needsRearm ? 'yes' : 'no'}</p>
+          <p><span className="font-semibold">Last sound:</span> {audioDiagnostics.lastSoundPlayed}</p>
+          <p><span className="font-semibold">Audio event:</span> {audioDiagnostics.lastEvent}</p>
+          <p><span className="font-semibold">Last audio error:</span> {audioDiagnostics.lastError}</p>
+          <p><span className="font-semibold">Fallback path used:</span> {audioDiagnostics.lastFallbackUsed}</p>
+        </div>
+      ) : null}
+
       <DndContext sensors={sensors} onDragStart={({ active }) => { setActiveDragId(String(active.id)); void sharedAudio.resumeForGesture('drag-start'); }} onDragEnd={({ active, over }) => { setActiveDragId(null); if (!over || over.id === 'answer-bank') return; void assignOption(String(active.id), String(over.id)); }}>
         <AnswerBank options={availableOptions} selectedOptionId={selectedOptionId} onSelect={(id) => { void sharedAudio.resumeForGesture('answer-select'); setSelectedOptionId(id); }} columns={columns} />
         <PromptGrid prompts={prompts} assignments={assignments} optionsById={optionsById} onTapAssign={(promptId) => { if (selectedOptionId) void assignOption(selectedOptionId, promptId); }} onClear={(promptId) => setAssignments((prev) => { const next = { ...prev }; delete next[promptId]; return next; })} columns={columns} />
