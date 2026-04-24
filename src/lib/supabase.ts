@@ -39,6 +39,10 @@ export async function createActivity(payload: { title: string; teacherName: stri
 export async function deleteActivityAndSubmissions(activityId: string): Promise<void> {
   if (!activityId) throw new Error('Missing activity id for delete.');
 
+  const { data: existingActivity, error: existingErr } = await supabase.from('activities').select('id').eq('id', activityId).maybeSingle();
+  if (existingErr) throw existingErr;
+  if (!existingActivity) throw new Error(`Activity ${activityId} was not found (or is not visible with current policy).`);
+
   const { error: submissionErr } = await supabase.from('submissions').delete().eq('activity_id', activityId);
   if (submissionErr) {
     const submissionDeleteDenied = /permission|policy/i.test(submissionErr.message || '');
@@ -47,8 +51,11 @@ export async function deleteActivityAndSubmissions(activityId: string): Promise<
     console.warn('[supabase] submissions delete warning', { activityId, message: submissionErr.message });
   }
 
-  const { error: activityErr } = await supabase.from('activities').delete().eq('id', activityId);
+  const { data: deletedActivities, error: activityErr } = await supabase.from('activities').delete().eq('id', activityId).select('id');
   if (activityErr) throw activityErr;
+  if (!deletedActivities?.length) {
+    throw new Error(`Delete was blocked or no rows were deleted for activity ${activityId}. Check Supabase RLS policy for activities.delete.`);
+  }
 }
 
 export async function saveSubmission(payload: Submission): Promise<void> {
