@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { sharedAudio } from '../../lib/audio';
+import { sharedAudio, type AudioDiagnostics } from '../../lib/audio';
 import { getActivity, saveSubmission } from '../../lib/supabase.ts';
 import type { Activity, AnswerOption, PromptItem } from '../../types/models';
 import AnswerBank from './AnswerBank';
@@ -22,8 +22,14 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   const [attempts, setAttempts] = useState(0);
   const [status, setStatus] = useState('Loading activity...');
   const [startTs, setStartTs] = useState<number>(0);
+  const [audioDiagnostics, setAudioDiagnostics] = useState<AudioDiagnostics>(sharedAudio.getDiagnostics());
 
   const sensors = useSensors(useSensor(PointerSensor), useSensor(TouchSensor));
+
+  useEffect(() => {
+    const unsubscribe = sharedAudio.subscribe((snapshot) => setAudioDiagnostics(snapshot));
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -62,16 +68,22 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   };
 
   if (!started) {
-    return <section className="space-y-3 rounded-3xl bg-white p-4 shadow-md ring-1 ring-indigo-100"><h1 className="text-xl font-bold text-slate-900">{activity?.title ?? 'Assignment'}</h1><p className="text-sm text-slate-600">{status}</p><input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter your name" className="w-full rounded-xl border px-3 py-2 text-slate-900" /><button onClick={() => { if (!studentName.trim()) { setStatus('Please enter your name.'); return; } setStarted(true); setStartTs(Date.now()); }} className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white">Start Activity</button></section>;
+    return <section className="space-y-3 rounded-3xl bg-white p-4 shadow-md ring-1 ring-indigo-100"><h1 className="text-xl font-bold text-slate-900">{activity?.title ?? 'Assignment'}</h1><p className="text-sm text-slate-600">{status}</p><input value={studentName} onChange={(e) => setStudentName(e.target.value)} placeholder="Enter your name" className="w-full rounded-xl border px-3 py-2 text-slate-900" /><button onClick={() => { if (!studentName.trim()) { setStatus('Please enter your name.'); return; } void sharedAudio.resumeForGesture('start-activity'); setStarted(true); setStartTs(Date.now()); }} className="rounded-xl bg-indigo-600 px-4 py-2 font-semibold text-white">Start Activity</button></section>;
   }
 
   return (
-    <section className="space-y-3 rounded-3xl bg-gradient-to-b from-indigo-50 via-cyan-50 to-emerald-50 p-3 shadow-md ring-1 ring-indigo-100">
-      <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1><button className="rounded-lg bg-slate-200 px-2 py-1 text-xs" onClick={() => void sharedAudio.unlock()}>Enable sound</button></div>
-      <div className="flex items-center justify-between"><p className="text-sm text-slate-700">Student: <span className="font-semibold">{studentName}</span></p><button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-emerald-500" onClick={() => void submit()}>Submit</button></div>
+    <section onPointerDown={() => { void sharedAudio.resumeForGesture('pointerdown'); }} className="space-y-2.5 rounded-3xl bg-gradient-to-b from-indigo-50 via-cyan-50 to-emerald-50 p-2.5 shadow-md ring-1 ring-indigo-100">
+      <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1><button className="rounded-lg bg-slate-200 px-2 py-1 text-xs" onClick={async () => { await sharedAudio.resumeForGesture('enable-sound'); await sharedAudio.play('place'); }}>Enable sound</button></div>
+      <div className="flex items-center justify-between"><p className="text-sm text-slate-700">Student: <span className="font-semibold">{studentName}</span></p><button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-emerald-500" onClick={() => { void sharedAudio.resumeForGesture('submit-click'); void submit(); }}>Submit</button></div>
       <p className="text-xs text-slate-600">{status}</p>
-      <DndContext sensors={sensors} onDragStart={({ active }) => setActiveDragId(String(active.id))} onDragEnd={({ active, over }) => { setActiveDragId(null); if (!over || over.id === 'answer-bank') return; void assignOption(String(active.id), String(over.id)); }}>
-        <AnswerBank options={availableOptions} selectedOptionId={selectedOptionId} onSelect={setSelectedOptionId} columns={columns} />
+      <div className="rounded-xl bg-white/75 px-2 py-1.5 text-[11px] text-slate-700 ring-1 ring-slate-200">
+        <p><span className="font-semibold">AudioContext:</span> {audioDiagnostics.contextState}</p>
+        <p><span className="font-semibold">Sound enabled:</span> {audioDiagnostics.soundEnabled ? 'yes' : 'no'}</p>
+        <p><span className="font-semibold">Last sound played:</span> {audioDiagnostics.lastSoundPlayed}</p>
+        <p><span className="font-semibold">Audio event:</span> {audioDiagnostics.lastEvent}</p>
+      </div>
+      <DndContext sensors={sensors} onDragStart={({ active }) => { setActiveDragId(String(active.id)); void sharedAudio.resumeForGesture('drag-start'); }} onDragEnd={({ active, over }) => { setActiveDragId(null); if (!over || over.id === 'answer-bank') return; void assignOption(String(active.id), String(over.id)); }}>
+        <AnswerBank options={availableOptions} selectedOptionId={selectedOptionId} onSelect={(id) => { void sharedAudio.resumeForGesture('answer-select'); setSelectedOptionId(id); }} columns={columns} />
         <PromptGrid prompts={prompts} assignments={assignments} optionsById={optionsById} onTapAssign={(promptId) => { if (selectedOptionId) void assignOption(selectedOptionId, promptId); }} onClear={(promptId) => setAssignments((prev) => { const next = { ...prev }; delete next[promptId]; return next; })} columns={columns} />
         <DragOverlay>{activeDragId && optionsById[activeDragId] ? <div className={`rounded-2xl px-3 py-2 text-sm font-semibold text-white shadow-xl ${optionsById[activeDragId].colorClass}`}>{optionsById[activeDragId].answerText}</div> : null}</DragOverlay>
       </DndContext>
