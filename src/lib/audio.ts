@@ -1,7 +1,8 @@
 const SOUND_PROFILE = {
-  correct: { frequency: 900, duration: 0.12 },
-  wrong: { frequency: 220, duration: 0.2 },
-  place: { frequency: 560, duration: 0.1 }
+  correct: { frequency: 1320, duration: 0.24, gain: 0.34, wave: 'triangle' as OscillatorType },
+  wrong: { frequency: 180, duration: 0.38, gain: 0.32, wave: 'square' as OscillatorType },
+  place: { frequency: 880, duration: 0.3, gain: 0.36, wave: 'triangle' as OscillatorType },
+  test: { frequency: 1040, duration: 0.6, gain: 0.5, wave: 'square' as OscillatorType }
 } as const;
 
 type SoundKind = keyof typeof SOUND_PROFILE;
@@ -12,6 +13,10 @@ type AudioDiagnostics = {
   lastSoundPlayed: SoundKind | 'none';
   lastEvent: string;
   lastError: string;
+  lastGain: number;
+  lastDuration: number;
+  lastFrequency: number;
+  lastFallbackUsed: 'none' | 'speech';
 };
 
 class SharedAudioEngine {
@@ -20,6 +25,10 @@ class SharedAudioEngine {
   private lastSoundPlayed: SoundKind | 'none' = 'none';
   private lastEvent = 'idle';
   private lastError = 'none';
+  private lastGain = 0;
+  private lastDuration = 0;
+  private lastFrequency = 0;
+  private lastFallbackUsed: 'none' | 'speech' = 'none';
   private listeners = new Set<(snapshot: AudioDiagnostics) => void>();
 
   private emit() {
@@ -41,7 +50,11 @@ class SharedAudioEngine {
       soundEnabled: this.unlocked,
       lastSoundPlayed: this.lastSoundPlayed,
       lastEvent: this.lastEvent,
-      lastError: this.lastError
+      lastError: this.lastError,
+      lastGain: this.lastGain,
+      lastDuration: this.lastDuration,
+      lastFrequency: this.lastFrequency,
+      lastFallbackUsed: this.lastFallbackUsed
     };
   }
 
@@ -82,28 +95,64 @@ class SharedAudioEngine {
     return this.resumeForGesture('unlock');
   }
 
-  async play(kind: SoundKind): Promise<void> {
-    const ctx = this.ensure();
-    if (!ctx) return;
-
-    if (ctx.state !== 'running') {
-      await this.resumeForGesture(`play:${kind}`);
-    }
-    if (ctx.state !== 'running') {
-      this.lastError = `play:${kind} blocked because AudioContext state is ${ctx.state}. iPhone/Safari requires a direct tap gesture.`;
-      this.lastEvent = `play:${kind} skipped because context is ${ctx.state}.`;
+  private runSpeechFallback(kind: SoundKind, reason: string): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      this.lastError = `${reason} + fallback unavailable (speechSynthesis not supported).`;
+      this.lastEvent = `play:${kind} fallback unavailable`;
+      this.lastFallbackUsed = 'none';
       this.emit();
       return;
     }
 
     try {
-      const { frequency, duration } = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(kind === 'test' ? 'Audio test. If you hear this, sound fallback is working.' : 'beep');
+      utterance.volume = 1;
+      utterance.rate = 1;
+      utterance.pitch = kind === 'wrong' ? 0.6 : 1.5;
+      window.speechSynthesis.speak(utterance);
+      this.lastFallbackUsed = 'speech';
+      this.lastEvent = `play:${kind} fallback speech emitted (${reason})`;
+      this.lastError = reason;
+      this.emit();
+    } catch (error) {
+      const message = (error as Error).message || 'unknown error';
+      this.lastFallbackUsed = 'none';
+      this.lastError = `${reason} + speech fallback failed (${message})`;
+      this.lastEvent = `play:${kind} fallback failed (${message})`;
+      this.emit();
+    }
+  }
+
+  async play(kind: SoundKind): Promise<void> {
+    const ctx = this.ensure();
+    const profile = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
+    this.lastFrequency = profile.frequency;
+    this.lastDuration = profile.duration;
+    this.lastGain = profile.gain;
+    this.lastFallbackUsed = 'none';
+
+    if (!ctx) {
+      this.runSpeechFallback(kind, 'AudioContext unavailable');
+      return;
+    }
+
+    if (ctx.state !== 'running') {
+      await this.resumeForGesture(`play:${kind}`);
+    }
+    if (ctx.state !== 'running') {
+      this.runSpeechFallback(kind, `play:${kind} blocked because AudioContext state is ${ctx.state}. iPhone/Safari requires a direct tap gesture.`);
+      return;
+    }
+
+    try {
+      const { frequency, duration, gain: targetGain, wave } = profile;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
+      osc.type = wave;
       osc.frequency.value = frequency;
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(targetGain, ctx.currentTime + 0.03);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
       osc.connect(gain);
       gain.connect(ctx.destination);
@@ -113,13 +162,17 @@ class SharedAudioEngine {
       this.unlocked = true;
       this.lastError = 'none';
       this.lastSoundPlayed = kind;
-      this.lastEvent = `play:${kind} emitted (${frequency}Hz/${duration}s).`;
+      this.lastEvent = `play:${kind} emitted (${frequency}Hz/${duration}s/gain=${targetGain}).`;
       this.emit();
+
+      if (kind === 'test') {
+        window.setTimeout(() => {
+          this.runSpeechFallback(kind, 'WebAudio played; speech fallback fired for audibility check');
+        }, 650);
+      }
     } catch (error) {
       const message = (error as Error).message || 'unknown error';
-      this.lastError = `play:${kind} failed (${message})`;
-      this.lastEvent = `play:${kind} failed (${message})`;
-      this.emit();
+      this.runSpeechFallback(kind, `play:${kind} failed (${message})`);
     }
   }
 }
