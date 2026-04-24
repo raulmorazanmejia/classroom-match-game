@@ -11,6 +11,7 @@ export default function TeacherDashboard({ onLogout, refreshToken }: Props) {
   const [status, setStatus] = useState('');
   const [openQrFor, setOpenQrFor] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteFeedback, setDeleteFeedback] = useState<Record<string, string>>({});
 
   const load = async () => {
     try {
@@ -38,17 +39,20 @@ export default function TeacherDashboard({ onLogout, refreshToken }: Props) {
     }
     try {
       setDeletingId(activityId);
+      setDeleteFeedback((prev) => ({ ...prev, [activityId]: 'Deleting...' }));
       setStatus(`Deleting activity ${activityId}...`);
       console.debug('[dashboard] deleting activity', { activityId });
       await deleteActivityAndSubmissions(activityId);
       console.debug('[dashboard] delete success', { activityId });
       setActivities((prev) => prev.filter((activity) => activity.id !== activityId));
+      setDeleteFeedback((prev) => ({ ...prev, [activityId]: 'Deleted' }));
       setStatus(`Deleted activity ${activityId}. Refreshing dashboard...`);
       await load();
       setStatus(`Deleted ${activityId}.`);
     } catch (error) {
       const message = (error as Error).message || 'Delete failed.';
       console.error('[dashboard] delete failed', { activityId, message, error });
+      setDeleteFeedback((prev) => ({ ...prev, [activityId]: `Delete failed: ${message}` }));
       setStatus(`Delete failed for ${activityId}: ${message}`);
     } finally {
       setDeletingId(null);
@@ -84,6 +88,7 @@ export default function TeacherDashboard({ onLogout, refreshToken }: Props) {
                 </div>
                 <button disabled={isDeleting} onClick={() => void deleteRow(activity.id)} className="rounded-lg bg-rose-600 px-2 py-1 text-sm text-white disabled:cursor-not-allowed disabled:bg-rose-300">{isDeleting ? 'Deleting...' : 'Delete Activity'}</button>
               </div>
+              {deleteFeedback[activity.id] ? <p className="text-xs text-slate-700">Delete status: {deleteFeedback[activity.id]}</p> : null}
               <div className="grid gap-2 rounded-xl bg-white p-2.5 ring-1 ring-slate-200">
                 <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Student Access</p>
                 <div className="flex flex-wrap gap-2 text-sm">

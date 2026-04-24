@@ -11,6 +11,7 @@ type AudioDiagnostics = {
   soundEnabled: boolean;
   lastSoundPlayed: SoundKind | 'none';
   lastEvent: string;
+  lastError: string;
 };
 
 class SharedAudioEngine {
@@ -18,6 +19,7 @@ class SharedAudioEngine {
   private unlocked = false;
   private lastSoundPlayed: SoundKind | 'none' = 'none';
   private lastEvent = 'idle';
+  private lastError = 'none';
   private listeners = new Set<(snapshot: AudioDiagnostics) => void>();
 
   private emit() {
@@ -38,7 +40,8 @@ class SharedAudioEngine {
       contextState: this.ctx ? this.ctx.state : 'not-created',
       soundEnabled: this.unlocked,
       lastSoundPlayed: this.lastSoundPlayed,
-      lastEvent: this.lastEvent
+      lastEvent: this.lastEvent,
+      lastError: this.lastError
     };
   }
 
@@ -46,6 +49,7 @@ class SharedAudioEngine {
     if (this.ctx) return this.ctx;
     const AudioContextClass = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioContextClass) {
+      this.lastError = 'AudioContext unavailable on this device/browser.';
       this.lastEvent = 'AudioContext unavailable on this device/browser.';
       this.emit();
       return null;
@@ -62,10 +66,13 @@ class SharedAudioEngine {
     try {
       await ctx.resume();
       this.unlocked = ctx.state === 'running';
+      this.lastError = this.unlocked ? 'none' : `AudioContext resume did not reach running state (state=${ctx.state}).`;
       this.lastEvent = `${source}: resume ${this.unlocked ? 'succeeded' : `ended in ${ctx.state}`}`;
     } catch (error) {
       this.unlocked = false;
-      this.lastEvent = `${source}: resume failed (${(error as Error).message || 'unknown error'})`;
+      const message = (error as Error).message || 'unknown error';
+      this.lastError = `${source}: resume failed (${message})`;
+      this.lastEvent = `${source}: resume failed (${message})`;
     }
     this.emit();
     return this.unlocked;
@@ -83,28 +90,37 @@ class SharedAudioEngine {
       await this.resumeForGesture(`play:${kind}`);
     }
     if (ctx.state !== 'running') {
+      this.lastError = `play:${kind} blocked because AudioContext state is ${ctx.state}. iPhone/Safari requires a direct tap gesture.`;
       this.lastEvent = `play:${kind} skipped because context is ${ctx.state}.`;
       this.emit();
       return;
     }
 
-    const { frequency, duration } = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + duration);
+    try {
+      const { frequency, duration } = SOUND_PROFILE[kind] ?? SOUND_PROFILE.place;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = frequency;
+      gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.15, ctx.currentTime + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + duration);
 
-    this.unlocked = true;
-    this.lastSoundPlayed = kind;
-    this.lastEvent = `play:${kind} emitted (${frequency}Hz/${duration}s).`;
-    this.emit();
+      this.unlocked = true;
+      this.lastError = 'none';
+      this.lastSoundPlayed = kind;
+      this.lastEvent = `play:${kind} emitted (${frequency}Hz/${duration}s).`;
+      this.emit();
+    } catch (error) {
+      const message = (error as Error).message || 'unknown error';
+      this.lastError = `play:${kind} failed (${message})`;
+      this.lastEvent = `play:${kind} failed (${message})`;
+      this.emit();
+    }
   }
 }
 
