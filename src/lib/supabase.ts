@@ -36,26 +36,29 @@ export async function createActivity(payload: { title: string; teacherName: stri
   return withSafeTitle(data as Activity);
 }
 
-export async function deleteActivityAndSubmissions(activityId: string): Promise<void> {
+export type DeleteActivityResponse = {
+  success: boolean;
+  deletedSubmissions: number;
+  deletedActivities: number;
+  error?: string;
+};
+
+export async function deleteActivityAndSubmissions(activityId: string, teacherPassword: string): Promise<DeleteActivityResponse> {
   if (!activityId) throw new Error('Missing activity id for delete.');
+  if (!teacherPassword) throw new Error('Missing teacher password for secure delete.');
 
-  const { data: existingActivity, error: existingErr } = await supabase.from('activities').select('id').eq('id', activityId).maybeSingle();
-  if (existingErr) throw existingErr;
-  if (!existingActivity) throw new Error(`Activity ${activityId} was not found (or is not visible with current policy).`);
+  const response = await fetch('/api/delete-activity', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ activityId, teacherPassword })
+  });
 
-  const { error: submissionErr } = await supabase.from('submissions').delete().eq('activity_id', activityId);
-  if (submissionErr) {
-    const submissionDeleteDenied = /permission|policy/i.test(submissionErr.message || '');
-    if (!submissionDeleteDenied) throw submissionErr;
-    // Continue; activity delete may still succeed via cascade or no related rows.
-    console.warn('[supabase] submissions delete warning', { activityId, message: submissionErr.message });
+  const payload = (await response.json()) as DeleteActivityResponse;
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error || `Delete failed for ${activityId}.`);
   }
 
-  const { data: deletedActivities, error: activityErr } = await supabase.from('activities').delete().eq('id', activityId).select('id');
-  if (activityErr) throw activityErr;
-  if (!deletedActivities?.length) {
-    throw new Error(`Delete was blocked or no rows were deleted for activity ${activityId}. Check Supabase RLS policy for activities.delete.`);
-  }
+  return payload;
 }
 
 export async function saveSubmission(payload: Submission): Promise<void> {

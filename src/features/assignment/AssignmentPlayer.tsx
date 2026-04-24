@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { sharedAudio, type AudioDiagnostics } from '../../lib/audio';
+import { sharedAudio, type AudioDiagnostics } from '../../lib/audio.ts';
 import { getActivity, saveSubmission } from '../../lib/supabase.ts';
 import type { Activity, AnswerOption, PromptItem } from '../../types/models';
 import AnswerBank from './AnswerBank';
