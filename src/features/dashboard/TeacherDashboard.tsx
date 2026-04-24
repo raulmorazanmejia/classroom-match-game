@@ -4,9 +4,9 @@ import { deleteActivityAndSubmissions, listActivities } from '../../lib/supabase
 import type { Activity } from '../../types/models';
 import TeacherLinkQr from './TeacherLinkQr';
 
-type Props = { onLogout: () => void; refreshToken: number };
+type Props = { onLogout: () => void; refreshToken: number; teacherPassword: string };
 
-export default function TeacherDashboard({ onLogout, refreshToken }: Props) {
+export default function TeacherDashboard({ onLogout, refreshToken, teacherPassword }: Props) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [status, setStatus] = useState('');
   const [openQrFor, setOpenQrFor] = useState<string | null>(null);
@@ -42,10 +42,10 @@ export default function TeacherDashboard({ onLogout, refreshToken }: Props) {
       setDeleteFeedback((prev) => ({ ...prev, [activityId]: 'Deleting...' }));
       setStatus(`Deleting activity ${activityId}...`);
       console.debug('[dashboard] deleting activity', { activityId });
-      await deleteActivityAndSubmissions(activityId);
+      const result = await deleteActivityAndSubmissions(activityId, teacherPassword);
       console.debug('[dashboard] delete success', { activityId });
       setActivities((prev) => prev.filter((activity) => activity.id !== activityId));
-      setDeleteFeedback((prev) => ({ ...prev, [activityId]: 'Deleted' }));
+      setDeleteFeedback((prev) => ({ ...prev, [activityId]: `Deleted (activities: ${result.deletedActivities}, submissions: ${result.deletedSubmissions})` }));
       setStatus(`Deleted activity ${activityId}. Refreshing dashboard...`);
       await load();
       setStatus(`Deleted ${activityId}.`);

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { GLOBAL_TEACHER_PASSWORD } from './constants';
 
-type Props = { onLogin: (teacherName: string) => void };
+type Props = { onLogin: (teacherName: string, teacherPassword: string) => void };
 
 export default function TeacherLogin({ onLogin }: Props) {
   const [teacherName, setTeacherName] = useState('');
@@ -12,7 +12,7 @@ export default function TeacherLogin({ onLogin }: Props) {
     e.preventDefault();
     if (!teacherName.trim()) return setStatus('Please enter your name.');
     if (password !== GLOBAL_TEACHER_PASSWORD) return setStatus('Incorrect password.');
-    onLogin(teacherName.trim());
+    onLogin(teacherName.trim(), password);
   };
 
   return (
