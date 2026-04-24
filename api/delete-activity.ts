@@ -1,48 +1,56 @@
 import { createClient } from '@supabase/supabase-js';
-import { GLOBAL_TEACHER_PASSWORD } from '../src/features/auth/constants';
-
 type DeleteRequestBody = { activityId?: string; teacherPassword?: string };
-
-type JsonResponse = {
-  success: boolean;
-  deletedSubmissions: number;
-  deletedActivities: number;
-  error?: string;
-};
-
-function json(res: any, status: number, payload: JsonResponse) {
-  res.status(status).json(payload);
-}
 
 export default async function handler(req: any, res: any) {
   try {
-    if (req.method !== 'POST') {
-      res.setHeader('Allow', 'POST');
-      return json(res, 405, { success: false, deletedSubmissions: 0, deletedActivities: 0, error: 'Method not allowed. Use POST.' });
-    }
-
-    const { activityId, teacherPassword } = (req.body ?? {}) as DeleteRequestBody;
-    if (!activityId) {
-      return json(res, 400, { success: false, deletedSubmissions: 0, deletedActivities: 0, error: 'Missing activityId.' });
-    }
-
-    if (!teacherPassword || teacherPassword !== GLOBAL_TEACHER_PASSWORD) {
-      return json(res, 401, { success: false, deletedSubmissions: 0, deletedActivities: 0, error: 'Invalid teacher password.' });
-    }
-
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !serviceRoleKey) {
-      return json(res, 500, {
-        success: false,
-        deletedSubmissions: 0,
-        deletedActivities: 0,
-        error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
+    if (req.method === 'GET') {
+      return res.status(200).json({
+        ok: true,
+        hasUrl: !!process.env.SUPABASE_URL,
+        hasKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
       });
     }
 
-    const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
+    if (req.method !== 'POST') {
+      res.setHeader('Allow', 'GET, POST');
+      return res.status(405).json({
+        success: false,
+        deletedSubmissions: 0,
+        deletedActivities: 0,
+        error: 'Method not allowed. Use POST.'
+      });
+    }
+
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!url || !key) {
+      return res.status(500).json({ error: 'Missing env vars' });
+    }
+
+    const { activityId, teacherPassword } = (req.body ?? {}) as DeleteRequestBody;
+
+    if (!activityId) {
+      return res.status(400).json({
+        success: false,
+        deletedSubmissions: 0,
+        deletedActivities: 0,
+        error: 'Missing activityId.'
+      });
+    }
+
+    const globalTeacherPassword = 'intel123';
+
+    if (!teacherPassword || teacherPassword !== globalTeacherPassword) {
+      return res.status(401).json({
+        success: false,
+        deletedSubmissions: 0,
+        deletedActivities: 0,
+        error: 'Invalid teacher password.'
+      });
+    }
+
+    const supabaseAdmin = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false }
     });
 
@@ -53,7 +61,7 @@ export default async function handler(req: any, res: any) {
       .select('id');
 
     if (submissionError) {
-      return json(res, 500, {
+      return res.status(500).json({
         success: false,
         deletedSubmissions: 0,
         deletedActivities: 0,
@@ -68,7 +76,7 @@ export default async function handler(req: any, res: any) {
       .select('id');
 
     if (activityError) {
-      return json(res, 500, {
+      return res.status(500).json({
         success: false,
         deletedSubmissions: deletedSubmissionsRows?.length ?? 0,
         deletedActivities: 0,
@@ -77,8 +85,9 @@ export default async function handler(req: any, res: any) {
     }
 
     const deletedActivities = deletedActivitiesRows?.length ?? 0;
+
     if (!deletedActivities) {
-      return json(res, 404, {
+      return res.status(404).json({
         success: false,
         deletedSubmissions: deletedSubmissionsRows?.length ?? 0,
         deletedActivities,
@@ -86,14 +95,13 @@ export default async function handler(req: any, res: any) {
       });
     }
 
-    return json(res, 200, {
+    return res.status(200).json({
       success: true,
       deletedSubmissions: deletedSubmissionsRows?.length ?? 0,
       deletedActivities
     });
-  } catch (error) {
-    const message = (error as Error).message || 'Unknown server error.';
-    console.error('[api/delete-activity] Unhandled server error', error);
-    return json(res, 500, { success: false, deletedSubmissions: 0, deletedActivities: 0, error: message });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: err.message });
   }
 }
