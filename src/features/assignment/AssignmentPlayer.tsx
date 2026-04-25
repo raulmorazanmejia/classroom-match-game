@@ -67,7 +67,7 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
       next[promptId] = optionId; return next;
     });
     setSelectedOptionId(null);
-    await sharedAudio.play('place');
+    await sharedAudio.play('tap');
   };
 
   const startLaunchSequence = async () => {

@@ -1,6 +1,6 @@
 const SOUND_FILES = {
   start: '/sounds/start.mp3',
-  place: '/sounds/place.mp3',
+  tap: '/sounds/tap.mp3',
   correct: '/sounds/correct.mp3',
   wrong: '/sounds/wrong.mp3',
   complete: '/sounds/complete.mp3',
