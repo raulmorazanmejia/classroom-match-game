@@ -45,39 +45,149 @@ button {
 }
 
 .tap-option {
+  position: relative;
   will-change: transform, box-shadow;
+  transform: translateY(0) scale(1);
+  box-shadow: 0 12px 22px rgba(15, 23, 42, 0.2), 0 5px 0 rgba(30, 41, 59, 0.24);
+  transition: transform 200ms cubic-bezier(0.2, 0.8, 0.2, 1.2), box-shadow 220ms ease, filter 180ms ease, opacity 180ms ease;
+}
+
+.tap-option::before {
+  content: '';
+  position: absolute;
+  inset: 2px 2px auto 2px;
+  height: 38%;
+  border-radius: 16px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.02));
+  pointer-events: none;
+}
+
+.tap-option:active {
+  transform: translateY(3px) scale(0.96);
+  box-shadow: 0 5px 12px rgba(15, 23, 42, 0.24), 0 2px 0 rgba(30, 41, 59, 0.24);
+}
+
+.tap-option-ripple {
+  position: absolute;
+  inset: -30%;
+  border-radius: 9999px;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.34) 0%, rgba(255, 255, 255, 0.06) 42%, transparent 70%);
 }
 
 .tap-option-correct {
-  animation: tap-correct-flash 300ms ease-out;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45), 0 0 22px rgba(34, 197, 94, 0.35), 0 14px 26px rgba(22, 163, 74, 0.24);
-  transform: scale(1.01);
+  animation: tap-correct-flash 350ms ease-out;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45), 0 0 24px rgba(34, 197, 94, 0.4), 0 13px 24px rgba(22, 163, 74, 0.28), 0 4px 0 rgba(20, 83, 45, 0.23);
+  transform: scale(1.04);
+}
+
+.tap-option-correct .tap-option-ripple {
+  animation: tap-correct-ripple 350ms ease-out;
 }
 
 .tap-option-wrong {
-  animation: tap-wrong-shake 250ms ease-in-out;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5), 0 10px 20px rgba(220, 38, 38, 0.28);
+  animation: tap-wrong-shake 400ms ease-in-out;
+  box-shadow: inset 0 0 0 100vmax rgba(239, 68, 68, 0.2), 0 0 0 3px rgba(239, 68, 68, 0.4), 0 8px 16px rgba(220, 38, 38, 0.24), 0 4px 0 rgba(127, 29, 29, 0.23);
 }
 
 .tap-blank-question {
   animation: tap-question-fade 320ms ease-out;
 }
 
+.tap-blank-atmosphere {
+  background:
+    radial-gradient(circle at 18% 22%, rgba(56, 189, 248, 0.12), transparent 45%),
+    radial-gradient(circle at 80% 78%, rgba(16, 185, 129, 0.1), transparent 44%),
+    linear-gradient(145deg, rgba(248, 250, 252, 0.72), rgba(238, 242, 255, 0.8));
+  animation: tap-atmosphere-drift 11s ease-in-out infinite alternate;
+}
+
+.tap-complete-check-ring {
+  stroke: rgba(16, 185, 129, 0.33);
+  stroke-width: 3;
+}
+
+.tap-complete-check-mark {
+  stroke: rgb(5 150 105);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 40;
+  stroke-dashoffset: 40;
+  animation: tap-check-draw 420ms ease-out forwards;
+}
+
+.tap-complete-check {
+  margin-bottom: 10px;
+  border-radius: 9999px;
+  padding: 10px;
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.22), rgba(16, 185, 129, 0.08));
+  animation: tap-check-pop 380ms cubic-bezier(0.2, 0.8, 0.2, 1.2);
+}
+
+.tap-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tap-confetti span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  opacity: 0;
+  animation: tap-confetti-float 1400ms ease-out forwards;
+}
+
+.tap-confetti span:nth-child(1) { top: 22%; left: 32%; background: rgba(59, 130, 246, 0.5); }
+.tap-confetti span:nth-child(2) { top: 30%; left: 63%; background: rgba(52, 211, 153, 0.48); animation-delay: 40ms; }
+.tap-confetti span:nth-child(3) { top: 16%; left: 52%; background: rgba(167, 139, 250, 0.42); animation-delay: 70ms; }
+.tap-confetti span:nth-child(4) { top: 27%; left: 46%; background: rgba(34, 197, 94, 0.4); animation-delay: 100ms; }
+
 @keyframes tap-correct-flash {
   0% { filter: brightness(1); transform: scale(1); }
-  45% { filter: brightness(1.23); transform: scale(1.025); }
-  100% { filter: brightness(1.05); transform: scale(1.01); }
+  52% { filter: brightness(1.2); transform: scale(1.04); }
+  100% { filter: brightness(1.02); transform: scale(1); }
+}
+
+@keyframes tap-correct-ripple {
+  0% { transform: scale(0.4); opacity: 0.2; }
+  65% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.08); opacity: 0; }
 }
 
 @keyframes tap-wrong-shake {
   0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-5px); }
-  40% { transform: translateX(4px); }
-  60% { transform: translateX(-3px); }
-  80% { transform: translateX(2px); }
+  18% { transform: translateX(-7px); }
+  36% { transform: translateX(6px); }
+  54% { transform: translateX(-4px); }
+  72% { transform: translateX(3px); }
 }
 
 @keyframes tap-question-fade {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tap-atmosphere-drift {
+  0% { transform: translate3d(0, 0, 0); opacity: 0.88; }
+  100% { transform: translate3d(0, -1.5%, 0); opacity: 1; }
+}
+
+@keyframes tap-check-draw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes tap-check-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tap-confetti-float {
+  0% { transform: translateY(4px) scale(0.6); opacity: 0; }
+  18% { opacity: 0.8; }
+  100% { transform: translateY(-65px) scale(1.1); opacity: 0; }
 }
