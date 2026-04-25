@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { sharedAudio } from '../../lib/audio.ts';
 import type { TapBlankQuestion } from '../../types/models';
 
-const ADVANCE_DELAY_MS = 800;
-const TRANSITION_MS = 170;
+const ADVANCE_DELAY_MS = 900;
+const NEXT_QUESTION_TRANSITION_MS = 380;
 
 const TILE_GRADIENTS = [
   'from-sky-500 to-blue-600',
-  'from-rose-500 to-red-600',
+  'from-fuchsia-500 to-violet-600',
   'from-orange-400 to-amber-500',
   'from-emerald-500 to-green-600'
 ];
@@ -27,6 +27,27 @@ type Props = {
   onComplete?: (score: number, total: number) => void;
 };
 
+type OptionState = 'default' | 'correct' | 'wrong' | 'dimmed';
+
+function getOptionState(params: {
+  optionIndex: number;
+  selectedAnswer: number | null;
+  correctIndex: number;
+  selectedIsCorrect: boolean;
+}): OptionState {
+  const { optionIndex, selectedAnswer, correctIndex, selectedIsCorrect } = params;
+  if (selectedAnswer == null) return 'default';
+  if (optionIndex === correctIndex) return 'correct';
+  if (optionIndex === selectedAnswer && !selectedIsCorrect) return 'wrong';
+  return 'dimmed';
+}
+
+function feedbackMessage(scoreRatio: number): string {
+  if (scoreRatio >= 0.85) return 'Great work!';
+  if (scoreRatio >= 0.6) return 'Almost there';
+  return 'Try again';
+}
+
 export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -34,15 +55,14 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
   const [score, setScore] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [feedbackTone, setFeedbackTone] = useState<'idle' | 'correct' | 'wrong'>('idle');
 
   const total = questions.length;
   const currentQuestion = questions[currentQuestionIndex];
-
   const correctIndex = currentQuestion?.correctIndex ?? -1;
-
   const selectedIsCorrect = selectedAnswer != null && selectedAnswer === correctIndex;
 
-  const progressText = useMemo(() => `${Math.min(currentQuestionIndex + 1, total)} of ${total}`, [currentQuestionIndex, total]);
+  const progressText = useMemo(() => `${Math.min(currentQuestionIndex + 1, total)} / ${total}`, [currentQuestionIndex, total]);
 
   useEffect(() => {
     if (!isComplete || !total) return;
@@ -57,6 +77,7 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
     setScore(0);
     setIsComplete(false);
     setIsTransitioning(false);
+    setFeedbackTone('idle');
     await sharedAudio.play('start');
   };
 
@@ -72,8 +93,9 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
       setCurrentQuestionIndex(nextIndex);
       setSelectedAnswer(null);
       setIsLocked(false);
+      setFeedbackTone('idle');
       setIsTransitioning(false);
-    }, TRANSITION_MS);
+    }, NEXT_QUESTION_TRANSITION_MS);
   };
 
   const onTapAnswer = async (optionIndex: number) => {
@@ -86,8 +108,10 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
     const isCorrect = optionIndex === correctIndex;
     if (isCorrect) {
       setScore((prev) => prev + 1);
+      setFeedbackTone('correct');
       await sharedAudio.play('correct');
     } else {
+      setFeedbackTone('wrong');
       await sharedAudio.play('wrong');
     }
 
@@ -103,16 +127,18 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
   }
 
   if (isComplete) {
+    const scoreRatio = score / total;
     return (
-      <section className="mx-auto flex min-h-[70dvh] w-full max-w-2xl flex-col items-center justify-center rounded-3xl bg-white p-6 text-center shadow-lg ring-1 ring-indigo-100">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-500">Activity Complete</p>
-        <h2 className="mt-2 text-4xl font-black text-slate-900">Great Job!</h2>
-        <p className="mt-4 text-2xl font-bold text-slate-700">Score: {score} / {total}</p>
+      <section className="mx-auto flex min-h-[72dvh] w-full max-w-2xl flex-col items-center justify-center rounded-3xl bg-white p-6 text-center shadow-lg ring-1 ring-indigo-100">
+        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-violet-500">Activity Complete</p>
+        <h2 className="mt-3 bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-4xl font-black text-transparent">Nice run!</h2>
+        <p className="mt-4 text-3xl font-black text-slate-900">{score} / {total}</p>
+        <p className="mt-2 text-lg font-semibold text-slate-600">{feedbackMessage(scoreRatio)}</p>
         <button
           onClick={() => { void reset(); }}
-          className="mt-6 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 px-8 py-4 text-xl font-bold text-white shadow-lg shadow-indigo-200"
+          className="mt-7 min-h-[56px] rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 px-10 py-3 text-xl font-bold text-white shadow-lg shadow-indigo-200"
         >
-          Restart
+          Play Again
         </button>
       </section>
     );
@@ -121,32 +147,45 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
   const { before, after } = sentenceParts(currentQuestion.sentence);
 
   return (
-    <section className="mx-auto flex min-h-[70dvh] w-full max-w-3xl touch-manipulation flex-col gap-5 overflow-hidden rounded-3xl bg-white p-4 shadow-md ring-1 ring-indigo-100 sm:p-6">
-      <header className={`tap-blank-question transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-        <p className="text-center text-[clamp(1.75rem,6.2vw,2.25rem)] font-black leading-tight text-slate-900">
+    <section className="mx-auto flex min-h-[72dvh] w-full max-w-3xl touch-manipulation flex-col gap-3 overflow-hidden rounded-3xl bg-white p-3 shadow-md ring-1 ring-indigo-100 sm:gap-4 sm:p-5">
+      <header className="flex items-center justify-between gap-2">
+        <p className="rounded-full bg-indigo-50 px-3 py-1.5 text-sm font-bold text-indigo-700 ring-1 ring-indigo-100">Question {progressText}</p>
+        {feedbackTone === 'wrong' && selectedAnswer != null ? (
+          <p className="text-sm font-semibold text-rose-600">Correct: {currentQuestion.options[correctIndex]}</p>
+        ) : (
+          <p className="text-sm font-semibold text-slate-500">Tap the best answer</p>
+        )}
+      </header>
+
+      <div className={`tap-blank-question rounded-2xl bg-slate-50 px-3 py-3 transition-all duration-300 ${isTransitioning ? 'scale-[0.98] opacity-0' : 'scale-100 opacity-100'}`}>
+        <p className="text-center text-[clamp(1.5rem,6.2vw,2.25rem)] font-black leading-tight text-slate-900">
           {before}
           <span className="tap-blank-blank mx-2 inline-block rounded-lg px-2 py-1 text-indigo-700">______</span>
           {after}
         </p>
-      </header>
+      </div>
 
       {currentQuestion.imageUrl ? (
-        <div className={`tap-blank-question mx-auto w-full max-w-lg overflow-hidden rounded-2xl bg-slate-100 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
-          <img src={currentQuestion.imageUrl} alt="Question hint" className="h-[180px] w-full object-cover sm:h-[220px]" loading="lazy" />
+        <div className={`tap-blank-question mx-auto w-full max-w-lg overflow-hidden rounded-2xl bg-slate-100 transition-all duration-300 ${isTransitioning ? 'scale-[0.98] opacity-0' : 'scale-100 opacity-100'}`}>
+          <img src={currentQuestion.imageUrl} alt="Question hint" className="mx-auto h-auto max-h-[22dvh] w-full object-contain" loading="lazy" />
         </div>
       ) : null}
 
-      <div className={`tap-blank-question grid flex-1 grid-cols-2 gap-3 transition-opacity duration-150 ${isTransitioning ? 'opacity-0' : 'opacity-100'}`}>
+      <div className={`tap-blank-question grid flex-1 grid-cols-2 gap-2.5 transition-all duration-300 sm:gap-3 ${isTransitioning ? 'scale-[0.98] opacity-0' : 'scale-100 opacity-100'}`}>
         {currentQuestion.options.map((option, optionIndex) => {
-          const isSelected = selectedAnswer === optionIndex;
-          const isCorrectOption = optionIndex === correctIndex;
+          const optionState = getOptionState({
+            optionIndex,
+            selectedAnswer,
+            correctIndex,
+            selectedIsCorrect
+          });
 
-          let stateClass = 'ring-0';
-          if (selectedAnswer != null) {
-            if (isCorrectOption) stateClass = 'tap-option-correct';
-            else if (isSelected && !selectedIsCorrect) stateClass = 'tap-option-wrong';
-            else stateClass = 'opacity-70';
-          }
+          const stateClass = {
+            default: 'ring-0',
+            correct: 'tap-option-correct',
+            wrong: 'tap-option-wrong',
+            dimmed: 'opacity-65'
+          }[optionState];
 
           return (
             <button
@@ -154,16 +193,16 @@ export default function TapFillBlankPlayer({ questions, onComplete }: Props) {
               type="button"
               disabled={isLocked}
               onClick={() => { void onTapAnswer(optionIndex); }}
-              className={`tap-option relative min-h-[110px] rounded-[20px] bg-gradient-to-br ${TILE_GRADIENTS[optionIndex % TILE_GRADIENTS.length]} px-3 py-4 text-center text-[clamp(1.25rem,5.4vw,1.8rem)] font-black text-white shadow-lg shadow-slate-300/40 transition duration-150 active:scale-[0.97] ${stateClass}`}
+              className={`tap-option relative flex min-h-[96px] items-center justify-center rounded-[20px] bg-gradient-to-br ${TILE_GRADIENTS[optionIndex % TILE_GRADIENTS.length]} px-3 py-3 text-center text-[clamp(1.1rem,4.7vw,1.45rem)] font-black leading-tight text-white shadow-[0_8px_18px_rgba(15,23,42,0.20)] transition duration-150 active:scale-[0.97] ${stateClass}`}
             >
-              {option}
+              <span className="max-h-[3.1em] overflow-hidden break-words">{option}</span>
             </button>
           );
         })}
       </div>
 
-      <footer className="flex items-center justify-center">
-        <p className="rounded-full bg-indigo-50 px-4 py-2 text-base font-bold text-indigo-700 ring-1 ring-indigo-100">{progressText}</p>
+      <footer className="flex items-center justify-center pt-0.5">
+        <p className="rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-bold text-indigo-700 ring-1 ring-indigo-100">{progressText}</p>
       </footer>
     </section>
   );

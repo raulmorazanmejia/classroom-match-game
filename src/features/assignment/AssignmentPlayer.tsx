@@ -143,25 +143,26 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   };
 
   if (!started) {
+    const showStatusMessage = !isTapBlankActivity || status === 'Loading activity...' || status === 'Please enter your name.' || status.includes('Failed');
     return (
-      <section className="relative overflow-hidden rounded-3xl bg-white p-5 shadow-md ring-1 ring-indigo-100">
-        <div className={`mx-auto max-w-xl text-center transition duration-300 ${launching ? 'pointer-events-none scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Classroom Match</p>
-          <h1 className="mt-2 text-3xl font-extrabold text-slate-900">{activity?.title ?? 'Assignment'}</h1>
-          <p className="mt-3 text-sm text-slate-600">{isTapBlankActivity ? 'Tap the best answer to fill in each blank.' : 'Match the answers to the prompts.'}</p>
+      <section className={`relative overflow-hidden rounded-3xl bg-white shadow-md ring-1 ring-indigo-100 ${isTapBlankActivity ? 'p-6 sm:p-7' : 'p-5'}`}>
+        <div className={`mx-auto text-center transition duration-300 ${isTapBlankActivity ? 'max-w-md' : 'max-w-xl'} ${launching ? 'pointer-events-none scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+          <p className={`font-semibold uppercase tracking-wide text-indigo-500 ${isTapBlankActivity ? 'text-sm tracking-[0.2em]' : 'text-xs'}`}>Classroom Match</p>
+          <h1 className={`mt-2 font-extrabold text-slate-900 ${isTapBlankActivity ? 'text-4xl leading-tight' : 'text-3xl'}`}>{activity?.title ?? 'Assignment'}</h1>
+          <p className={`mx-auto mt-3 text-slate-600 ${isTapBlankActivity ? 'max-w-sm text-base' : 'text-sm'}`}>{isTapBlankActivity ? 'Read the sentence, tap the best word, and keep your streak going.' : 'Match the answers to the prompts.'}</p>
           <input
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
             placeholder="Enter your name"
-            className="mx-auto mt-4 w-full max-w-sm rounded-2xl border border-indigo-200 px-4 py-3 text-center text-base text-slate-900 shadow-sm focus:border-indigo-400 focus:outline-none"
+            className={`mx-auto mt-5 w-full max-w-sm rounded-2xl border border-indigo-200 px-4 text-center text-slate-900 shadow-sm focus:border-indigo-400 focus:outline-none ${isTapBlankActivity ? 'py-3.5 text-lg' : 'py-3 text-base'}`}
           />
           <button
             onClick={() => { void startLaunchSequence(); }}
-            className="mt-4 rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 px-10 py-4 text-lg font-extrabold text-white shadow-lg shadow-indigo-200 transition hover:brightness-110"
+            className={`mt-4 min-h-[56px] rounded-2xl bg-gradient-to-r from-fuchsia-500 via-violet-500 to-indigo-500 px-10 text-xl font-extrabold text-white shadow-lg shadow-indigo-200 transition active:scale-[0.98] ${isTapBlankActivity ? 'py-3.5' : 'py-4 hover:brightness-110'}`}
           >
             Start
           </button>
-          <p className="mt-3 text-xs text-slate-500">{status}</p>
+          {showStatusMessage ? <p className="mt-3 text-xs text-slate-500">{status}</p> : null}
 
           {SHOW_AUDIO_DEBUG ? (
             <div className="mx-auto mt-4 max-w-sm rounded-xl bg-slate-50 px-3 py-2 text-left text-[11px] text-slate-700 ring-1 ring-slate-200">
@@ -190,7 +191,7 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   return (
     <section onPointerDown={() => { void sharedAudio.resumeForGesture('pointerdown'); }} className="space-y-2.5 rounded-3xl bg-gradient-to-b from-indigo-50 via-cyan-50 to-emerald-50 p-2.5 shadow-md ring-1 ring-indigo-100">
       <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1></div>
-      <p className="text-xs text-slate-600">{status}</p>
+      {!isTapBlankActivity ? <p className="text-xs text-slate-600">{status}</p> : null}
 
       {SHOW_AUDIO_DEBUG ? (
         <div className="rounded-xl bg-white/75 px-2 py-1.5 text-[11px] text-slate-700 ring-1 ring-slate-200">
