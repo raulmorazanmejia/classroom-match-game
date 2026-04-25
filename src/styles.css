@@ -49,24 +49,24 @@ button {
 }
 
 .tap-option-correct {
-  animation: tap-correct-flash 340ms ease-out;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45), 0 14px 26px rgba(22, 163, 74, 0.28);
-  transform: scale(1.02);
+  animation: tap-correct-flash 300ms ease-out;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45), 0 0 22px rgba(34, 197, 94, 0.35), 0 14px 26px rgba(22, 163, 74, 0.24);
+  transform: scale(1.01);
 }
 
 .tap-option-wrong {
-  animation: tap-wrong-shake 260ms ease-in-out;
+  animation: tap-wrong-shake 250ms ease-in-out;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5), 0 10px 20px rgba(220, 38, 38, 0.28);
 }
 
 .tap-blank-question {
-  animation: tap-question-fade 170ms ease-out;
+  animation: tap-question-fade 320ms ease-out;
 }
 
 @keyframes tap-correct-flash {
-  0% { filter: brightness(1); }
-  30% { filter: brightness(1.25); }
-  100% { filter: brightness(1.05); }
+  0% { filter: brightness(1); transform: scale(1); }
+  45% { filter: brightness(1.23); transform: scale(1.025); }
+  100% { filter: brightness(1.05); transform: scale(1.01); }
 }
 
 @keyframes tap-wrong-shake {
