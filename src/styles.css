@@ -38,3 +38,46 @@ button {
   60% { opacity: 1; transform: scale(1.08); }
   100% { opacity: 1; transform: scale(1); }
 }
+
+.tap-blank-blank {
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.28) 100%);
+  border-bottom: 4px solid rgba(67, 56, 202, 0.65);
+}
+
+.tap-option {
+  will-change: transform, box-shadow;
+}
+
+.tap-option-correct {
+  animation: tap-correct-flash 340ms ease-out;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.45), 0 14px 26px rgba(22, 163, 74, 0.28);
+  transform: scale(1.02);
+}
+
+.tap-option-wrong {
+  animation: tap-wrong-shake 260ms ease-in-out;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5), 0 10px 20px rgba(220, 38, 38, 0.28);
+}
+
+.tap-blank-question {
+  animation: tap-question-fade 170ms ease-out;
+}
+
+@keyframes tap-correct-flash {
+  0% { filter: brightness(1); }
+  30% { filter: brightness(1.25); }
+  100% { filter: brightness(1.05); }
+}
+
+@keyframes tap-wrong-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+
+@keyframes tap-question-fade {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
