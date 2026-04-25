@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { DndContext, DragOverlay, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { sharedAudio, type AudioDiagnostics } from '../../lib/audio.ts';
 import { getActivity, saveSubmission } from '../../lib/supabase.ts';
-import type { Activity, AnswerOption, PromptItem } from '../../types/models';
+import type { Activity, AnswerOption, PromptItem, TapBlankQuestion } from '../../types/models';
 import AnswerBank from './AnswerBank';
 import PromptGrid from './PromptGrid';
+import TapFillBlankPlayer from './TapFillBlankPlayer';
+import { SAMPLE_TAP_BLANK_QUESTIONS } from './sampleTapBlankQuestions';
 
 const TILE_COLORS = ['bg-fuchsia-500', 'bg-violet-500', 'bg-blue-500', 'bg-cyan-500', 'bg-emerald-500', 'bg-amber-500', 'bg-rose-500'];
 const COUNTDOWN_SEQUENCE = ['3', '2', '1', 'Ready?'];
@@ -49,6 +51,15 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   const optionsById = useMemo(() => Object.fromEntries(options.map((o) => [o.id, o])) as Record<string, AnswerOption>, [options]);
   const availableOptions = options.filter((option) => !Object.values(assignments).includes(option.id));
 
+  const tapBlankQuestions = useMemo(() => {
+    const questions = (activity?.tap_blank_questions?.length ? activity.tap_blank_questions : SAMPLE_TAP_BLANK_QUESTIONS) as TapBlankQuestion[];
+    return questions
+      .filter((q) => q && typeof q.sentence === 'string' && Array.isArray(q.options) && q.options.length === 4)
+      .map((q) => ({ ...q, options: q.options.slice(0, 4) as [string, string, string, string], correctIndex: Math.max(0, Math.min(3, q.correctIndex)) }));
+  }, [activity]);
+
+  const isTapBlankActivity = (activity?.activity_type ?? '').toLowerCase() === 'tap-blank';
+
   const assignOption = async (optionId: string, promptId: string) => {
     setAssignments((prev) => {
       const next = { ...prev };
@@ -79,11 +90,29 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
             setLaunching(false);
             setStarted(true);
             setStartTs(Date.now());
-            setStatus('Match the answers to the prompts.');
+            setStatus(isTapBlankActivity ? 'Tap the best answer to fill in the blank.' : 'Match the answers to the prompts.');
           }, 260);
         }
       }, index * 420);
     });
+  };
+
+
+  const submitTapBlank = async (finalScore: number, totalQuestions: number) => {
+    setAttempts((prev) => prev + 1);
+    try {
+      await saveSubmission({
+        activity_id: activityId,
+        student_name: studentName || 'Student',
+        score: finalScore,
+        total: totalQuestions,
+        attempts: attempts + 1,
+        duration_seconds: Math.floor((Date.now() - startTs) / 1000)
+      });
+      setStatus(`Completed: ${finalScore}/${totalQuestions}`);
+    } catch (error) {
+      setStatus((error as Error).message || 'Unable to save completion score.');
+    }
   };
 
   const submit = async () => {
@@ -119,7 +148,7 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
         <div className={`mx-auto max-w-xl text-center transition duration-300 ${launching ? 'pointer-events-none scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
           <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Classroom Match</p>
           <h1 className="mt-2 text-3xl font-extrabold text-slate-900">{activity?.title ?? 'Assignment'}</h1>
-          <p className="mt-3 text-sm text-slate-600">Match the answers to the prompts.</p>
+          <p className="mt-3 text-sm text-slate-600">{isTapBlankActivity ? 'Tap the best answer to fill in each blank.' : 'Match the answers to the prompts.'}</p>
           <input
             value={studentName}
             onChange={(e) => setStudentName(e.target.value)}
@@ -161,7 +190,6 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
   return (
     <section onPointerDown={() => { void sharedAudio.resumeForGesture('pointerdown'); }} className="space-y-2.5 rounded-3xl bg-gradient-to-b from-indigo-50 via-cyan-50 to-emerald-50 p-2.5 shadow-md ring-1 ring-indigo-100">
       <div className="flex items-center justify-between"><h1 className="text-lg font-bold text-slate-900">{activity?.title || 'Assignment Mode'}</h1></div>
-      <div className="flex items-center justify-between"><p className="text-sm text-slate-700">Student: <span className="font-semibold">{studentName}</span></p><button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-emerald-500" onClick={() => { void sharedAudio.resumeForGesture('submit-click'); void submit(); }}>Submit</button></div>
       <p className="text-xs text-slate-600">{status}</p>
 
       {SHOW_AUDIO_DEBUG ? (
@@ -175,11 +203,18 @@ export default function AssignmentPlayer({ activityId, columns }: { activityId: 
         </div>
       ) : null}
 
-      <DndContext sensors={sensors} onDragStart={({ active }) => { setActiveDragId(String(active.id)); void sharedAudio.resumeForGesture('drag-start'); }} onDragEnd={({ active, over }) => { setActiveDragId(null); if (!over || over.id === 'answer-bank') return; void assignOption(String(active.id), String(over.id)); }}>
-        <AnswerBank options={availableOptions} selectedOptionId={selectedOptionId} onSelect={(id) => { void sharedAudio.resumeForGesture('answer-select'); setSelectedOptionId(id); }} columns={columns} />
-        <PromptGrid prompts={prompts} assignments={assignments} optionsById={optionsById} onTapAssign={(promptId) => { if (selectedOptionId) void assignOption(selectedOptionId, promptId); }} onClear={(promptId) => setAssignments((prev) => { const next = { ...prev }; delete next[promptId]; return next; })} columns={columns} />
-        <DragOverlay>{activeDragId && optionsById[activeDragId] ? <div className={`rounded-2xl px-3 py-2 text-sm font-semibold text-white shadow-xl ${optionsById[activeDragId].colorClass}`}>{optionsById[activeDragId].answerText}</div> : null}</DragOverlay>
-      </DndContext>
+      {isTapBlankActivity ? (
+        <TapFillBlankPlayer questions={tapBlankQuestions} onComplete={(finalScore, totalQuestions) => { void submitTapBlank(finalScore, totalQuestions); }} />
+      ) : (
+        <>
+          <div className="flex items-center justify-between"><p className="text-sm text-slate-700">Student: <span className="font-semibold">{studentName}</span></p><button className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-bold text-white shadow hover:bg-emerald-500" onClick={() => { void sharedAudio.resumeForGesture('submit-click'); void submit(); }}>Submit</button></div>
+          <DndContext sensors={sensors} onDragStart={({ active }) => { setActiveDragId(String(active.id)); void sharedAudio.resumeForGesture('drag-start'); }} onDragEnd={({ active, over }) => { setActiveDragId(null); if (!over || over.id === 'answer-bank') return; void assignOption(String(active.id), String(over.id)); }}>
+            <AnswerBank options={availableOptions} selectedOptionId={selectedOptionId} onSelect={(id) => { void sharedAudio.resumeForGesture('answer-select'); setSelectedOptionId(id); }} columns={columns} />
+            <PromptGrid prompts={prompts} assignments={assignments} optionsById={optionsById} onTapAssign={(promptId) => { if (selectedOptionId) void assignOption(selectedOptionId, promptId); }} onClear={(promptId) => setAssignments((prev) => { const next = { ...prev }; delete next[promptId]; return next; })} columns={columns} />
+            <DragOverlay>{activeDragId && optionsById[activeDragId] ? <div className={`rounded-2xl px-3 py-2 text-sm font-semibold text-white shadow-xl ${optionsById[activeDragId].colorClass}`}>{optionsById[activeDragId].answerText}</div> : null}</DragOverlay>
+          </DndContext>
+        </>
+      )}
     </section>
   );
 }
